@@ -282,16 +282,16 @@ function TimerScr({config,onComplete,onCancel,pearls,onSavePearl}){
   const[s1Txt,setS1Txt]=useState("");const[s4,setS4]=useState(["","",""]);const[s4Tags,setS4Tags]=useState([]);
   const[s5,setS5]=useState(["","",""]);const[actPlan,setActPlan]=useState("");const[checks,setChecks]=useState({});
   const[rec,setRec]=useState(false);const[recD,setRecD]=useState({});const[pearlSaved,setPearlSaved]=useState(false);
-  const[showSug,setShowSug]=useState(false);const[sugP,setSugP]=useState(null);
   const[note,setNote]=useState("");const[showNote,setShowNote]=useState(false);
   const scrollRef=useRef(null);
   const[compact,setCompact]=useState(false);
   useEffect(()=>{const ck=()=>setCompact(window.innerWidth<600);ck();window.addEventListener("resize",ck);return()=>window.removeEventListener("resize",ck)},[]);
   const ref=useRef(null);
   useEffect(()=>{if(paused)return;ref.current=setInterval(()=>{setTl(p=>{if(p<=1){if(step<5){setStep(s=>s+1);return 60}else{clearInterval(ref.current);onComplete(elapsed+60);return 0}}return p-1});setElapsed(e=>e+1)},1000);return()=>clearInterval(ref.current)},[paused,step]);
-  useEffect(()=>{if(step===3&&s1Txt.trim()){const m=pearls.find(p=>p.dx.toLowerCase().includes(s1Txt.toLowerCase()));if(m){setSugP(m);setShowSug(true)}else{setShowSug(false)}}else if(step!==3){setShowSug(false)}},[step,s1Txt]);
   useEffect(()=>{if(scrollRef.current)scrollRef.current.scrollTop=0;setShowNote(false);setNote("")},[step]);
   const st=STEPS[step-1];const StepIcon=st.icon;
+  // Pearl suggestion computed on every render — no useEffect timing issues
+  const matchedPearl=step===3&&s1Txt.trim().length>0?pearls.find(p=>p.dx.toLowerCase().includes(s1Txt.trim().toLowerCase())):null;
   const goNext=()=>{if(step<5){setStep(x=>x+1);setTl(60)}else onComplete(elapsed)};
   const goBack=()=>{if(step>1){setStep(x=>x-1);setTl(60)}};
   const toggleRec=()=>{if(rec){setRec(false);setRecD(p=>({...p,[step]:3+Math.floor(Math.random()*8)}))}else setRec(true)};
@@ -366,9 +366,9 @@ function TimerScr({config,onComplete,onCancel,pearls,onSavePearl}){
         </>}
         {/* STEP 3 */}
         {step===3&&<>
-          {showSug&&sugP&&<div style={{...ds.card,padding:12,marginBottom:10,borderLeft:`3px solid ${ds.gold}`}}>
-            <div style={{display:"flex",alignItems:"center",gap:6}}><Star size={14} color={ds.gold}/><span style={{fontSize:13,fontWeight:700,color:ds.gold}}>Saved pearl for "{sugP.dx}"</span></div>
-            <button onClick={()=>setShowSug(false)} style={{width:"100%",marginTop:8,padding:"10px",...ds.btnSecondary,fontSize:13,fontWeight:600,color:ds.gold,borderColor:ds.gold}}>Use Saved Pearl →</button>
+          {matchedPearl&&!pearlSaved&&<div style={{...ds.card,padding:12,marginBottom:10,borderLeft:`3px solid ${ds.gold}`}}>
+            <div style={{display:"flex",alignItems:"center",gap:6}}><Star size={14} color={ds.gold}/><span style={{fontSize:13,fontWeight:700,color:ds.gold}}>Saved pearl for "{matchedPearl.dx}"</span></div>
+            <button onClick={()=>{setPearlSaved(false)}} style={{width:"100%",marginTop:8,padding:"10px",...ds.btnSecondary,fontSize:13,fontWeight:600,color:ds.gold,borderColor:ds.gold}}>Use Saved Pearl →</button>
           </div>}
           <div style={{...ds.card,padding:14}}>
             <p style={{fontSize:13,color:ds.txB,margin:"0 0 10px",fontWeight:400}}>Teach 1-2 key points:</p>
