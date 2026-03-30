@@ -29,9 +29,9 @@ const ENCOUNTERS=[
   {id:6,date:"2026-03-26",time:"09:45",dept:"Medicine",lr:"Student",ct:"Long Case",dx:"Diabetic Ketoacidosis",dur:320,useful:4,steps:[1,1,1,1,0],pearl:true,voice:true,tags:["Good reasoning"],s3:["Fixed-rate insulin infusion is the protocol","DKA + abdominal pain, always check amylase","Normal saline initially then switch to dextrose","Cerebral edema in young patients"],s4:["identifying the precipitating cause","calculated the anion gap correctly",""],s5:["","",""],s5plan:""},
 ];
 const INIT_PEARLS=[
-  {id:"p1",dept:"Medicine",dx:"Pneumonia",pts:["CURB-65 determines admission","","Amoxicillin for community-acquired","Multilobar infiltrates with sepsis"],used:3,fav:true},
-  {id:"p2",dept:"Medicine",dx:"Diabetes",pts:["HbA1c target <7%","diabetes + foot ulcer","Metformin after renal check","Silent MI in diabetics"],used:5,fav:true},
-  {id:"p3",dept:"Surgery",dx:"Appendicitis",pts:["Alvarado score helps","","Lap appendectomy gold standard","Perforation >48hrs"],used:2,fav:false},
+  {id:"p1",dept:"Medicine",dx:"Pneumonia",pts:["CURB-65 score determines admission vs outpatient","pneumonia + hypoxia","oxygen saturation and chest X-ray","Amoxicillin for community-acquired","Multilobar infiltrates with sepsis"],used:3,fav:true},
+  {id:"p2",dept:"Medicine",dx:"Diabetes",pts:["HbA1c target is less than 7% for most patients","diabetes + foot ulcer","peripheral pulses and sensation","Metformin after ruling out renal impairment","Silent MI in diabetic patients"],used:5,fav:true},
+  {id:"p3",dept:"Surgery",dx:"Appendicitis",pts:["Alvarado score helps clinical diagnosis","RIF pain + fever","rebound tenderness and Rovsing sign","Laparoscopic appendectomy is gold standard","Perforation risk increases after 48 hours"],used:2,fav:false},
 ];
 const WDATA=[{d:"Mon",s:3},{d:"Tue",s:2},{d:"Wed",s:4},{d:"Thu",s:1},{d:"Fri",s:3},{d:"Sat",s:0},{d:"Sun",s:1}];
 
@@ -279,9 +279,9 @@ function Home({onStart,pc}){
 // ── Timer Screen ──
 function TimerScr({config,onComplete,onCancel,pearls,onSavePearl}){
   const[step,setStep]=useState(1);const[tl,setTl]=useState(60);const[paused,setPaused]=useState(false);const[elapsed,setElapsed]=useState(0);
-  const[s1Txt,setS1Txt]=useState("");const[s4,setS4]=useState(["","",""]);const[s4Tags,setS4Tags]=useState([]);
+  const[s1Txt,setS1Txt]=useState("");const[s3,setS3]=useState(["","","","",""]);const[s4,setS4]=useState(["","",""]);const[s4Tags,setS4Tags]=useState([]);
   const[s5,setS5]=useState(["","",""]);const[actPlan,setActPlan]=useState("");const[checks,setChecks]=useState({});
-  const[rec,setRec]=useState(false);const[recD,setRecD]=useState({});const[pearlSaved,setPearlSaved]=useState(false);
+  const[rec,setRec]=useState(false);const[recD,setRecD]=useState({});const[pearlSaved,setPearlSaved]=useState(false);const[pearlUsed,setPearlUsed]=useState(false);
   const[note,setNote]=useState("");const[showNote,setShowNote]=useState(false);
   const scrollRef=useRef(null);
   const[compact,setCompact]=useState(false);
@@ -366,19 +366,20 @@ function TimerScr({config,onComplete,onCancel,pearls,onSavePearl}){
         </>}
         {/* STEP 3 */}
         {step===3&&<>
-          {matchedPearl&&!pearlSaved&&<div style={{...ds.card,padding:12,marginBottom:10,borderLeft:`3px solid ${ds.gold}`}}>
+          {matchedPearl&&!pearlUsed&&<div style={{...ds.card,padding:12,marginBottom:10,borderLeft:`3px solid ${ds.gold}`}}>
             <div style={{display:"flex",alignItems:"center",gap:6}}><Star size={14} color={ds.gold}/><span style={{fontSize:13,fontWeight:700,color:ds.gold}}>Saved pearl for "{matchedPearl.dx}"</span></div>
-            <button onClick={()=>{setPearlSaved(false)}} style={{width:"100%",marginTop:8,padding:"10px",...ds.btnSecondary,fontSize:13,fontWeight:600,color:ds.gold,borderColor:ds.gold}}>Use Saved Pearl →</button>
+            <p style={{fontSize:11,color:ds.txB,margin:"4px 0 0"}}>Tap below to auto-fill your templates</p>
+            <button onClick={()=>{setS3([...matchedPearl.pts]);setPearlUsed(true)}} style={{width:"100%",marginTop:8,padding:"10px",...ds.btnSecondary,fontSize:13,fontWeight:600,color:ds.gold,borderColor:ds.gold}}>Use Saved Pearl →</button>
           </div>}
           <div style={{...ds.card,padding:14}}>
             <p style={{fontSize:13,color:ds.txB,margin:"0 0 10px",fontWeight:400}}>Teach 1-2 key points:</p>
-            <div style={{marginBottom:10}}><span style={{fontSize:13,color:ds.txB}}>• One important thing to remember is...</span><input placeholder="___" style={{...ds.input,marginTop:4,background:ds.bdL}}/></div>
-            <div style={{marginBottom:10}}><div style={{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}><span style={{fontSize:13,color:ds.txB}}>• In patients with</span><input placeholder="condition" style={{...ds.input,width:100,padding:"8px 10px",background:ds.bdL}}/><span style={{fontSize:13,color:ds.txB}}>always check</span><input placeholder="what" style={{...ds.input,width:100,padding:"8px 10px",background:ds.bdL}}/></div></div>
-            <div style={{marginBottom:10}}><span style={{fontSize:13,color:ds.txB}}>• First-line treatment is usually...</span><input placeholder="___" style={{...ds.input,marginTop:4,background:ds.bdL}}/></div>
-            <div><span style={{fontSize:13,color:ds.txB}}>• Red flag:</span><input placeholder="___" style={{...ds.input,marginTop:4,background:ds.bdL}}/></div>
+            <div style={{marginBottom:10}}><span style={{fontSize:13,color:ds.txB}}>• One important thing to remember is...</span><input value={s3[0]} onChange={e=>{const n=[...s3];n[0]=e.target.value;setS3(n)}} placeholder="___" style={{...ds.input,marginTop:4,background:s3[0]?`${ds.gold}08`:ds.bdL,borderColor:s3[0]?ds.gold:ds.bd}}/></div>
+            <div style={{marginBottom:10}}><div style={{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}><span style={{fontSize:13,color:ds.txB}}>• In patients with</span><input value={s3[1]} onChange={e=>{const n=[...s3];n[1]=e.target.value;setS3(n)}} placeholder="condition" style={{...ds.input,width:100,padding:"8px 10px",background:s3[1]?`${ds.gold}08`:ds.bdL,borderColor:s3[1]?ds.gold:ds.bd}}/><span style={{fontSize:13,color:ds.txB}}>always check</span><input value={s3[2]} onChange={e=>{const n=[...s3];n[2]=e.target.value;setS3(n)}} placeholder="what" style={{...ds.input,width:100,padding:"8px 10px",background:s3[2]?`${ds.gold}08`:ds.bdL,borderColor:s3[2]?ds.gold:ds.bd}}/></div></div>
+            <div style={{marginBottom:10}}><span style={{fontSize:13,color:ds.txB}}>• First-line treatment is usually...</span><input value={s3[3]} onChange={e=>{const n=[...s3];n[3]=e.target.value;setS3(n)}} placeholder="___" style={{...ds.input,marginTop:4,background:s3[3]?`${ds.gold}08`:ds.bdL,borderColor:s3[3]?ds.gold:ds.bd}}/></div>
+            <div><span style={{fontSize:13,color:ds.txB}}>• Red flag:</span><input value={s3[4]} onChange={e=>{const n=[...s3];n[4]=e.target.value;setS3(n)}} placeholder="___" style={{...ds.input,marginTop:4,background:s3[4]?`${ds.gold}08`:ds.bdL,borderColor:s3[4]?ds.gold:ds.bd}}/></div>
           </div>
           <div style={{display:"flex",gap:8,marginTop:10,alignItems:"center"}}>
-            <button onClick={()=>{onSavePearl({dept:config.dept,dx:s1Txt||"General",pts:["","","",""]});setPearlSaved(true)}} disabled={pearlSaved} style={{flex:1,padding:"12px",...ds.btnSecondary,fontSize:13,fontWeight:600,color:pearlSaved?ds.green:ds.txB,borderColor:pearlSaved?ds.green:ds.bd,background:pearlSaved?`${ds.green}10`:"#fff",transition:"all 0.2s ease",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+            <button onClick={()=>{onSavePearl({dept:config.dept,dx:s1Txt||"General",pts:[...s3]});setPearlSaved(true)}} disabled={pearlSaved} style={{flex:1,padding:"12px",...ds.btnSecondary,fontSize:13,fontWeight:600,color:pearlSaved?ds.green:ds.txB,borderColor:pearlSaved?ds.green:ds.bd,background:pearlSaved?`${ds.green}10`:"#fff",transition:"all 0.2s ease",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
               {pearlSaved?<><Check size={14}/><span>Pearl Saved</span></>:<><Star size={14}/><span>Save as teaching pearl</span></>}
             </button>
             <VoiceBtn rec={rec} onTap={toggleRec}/>
@@ -626,7 +627,7 @@ function PearlLib({pearls,onBack}){
       <div style={{flex:1,overflowY:"auto",minHeight:0,padding:"12px 16px 20px",WebkitOverflowScrolling:"touch"}}>
         {f.map(p => <div key={p.id} style={{...ds.card,padding:14,marginBottom:8}}>
           <div style={{display:"flex",gap:6,marginBottom:8}}><span style={{fontSize:10,background:`${ds.purple}15`,color:ds.purple,padding:"3px 8px",borderRadius:6,fontWeight:600}}>{p.dept}</span><span style={{fontSize:10,background:ds.surface,color:ds.blue,padding:"3px 8px",borderRadius:6,fontWeight:600}}>{p.dx}</span><span style={{marginLeft:"auto"}}><Star size={16} color={p.fav?ds.gold:ds.txL} fill={p.fav?ds.gold:"none"}/></span></div>
-          {p.pts.filter(x=>x).map((pt,i) => <div key={i} style={{fontSize:13,color:ds.tx,padding:"4px 0",lineHeight:1.5,fontWeight:400}}><span style={{color:ds.txL,fontSize:11,fontWeight:600}}>{["Remember:","Check:","Treatment:","Red flag:"][i]}</span> {pt}</div>)}
+          {p.pts.filter(x=>x).map((pt,i) => <div key={i} style={{fontSize:13,color:ds.tx,padding:"4px 0",lineHeight:1.5,fontWeight:400}}><span style={{color:ds.txL,fontSize:11,fontWeight:600}}>{["Remember:","In patients with:","Always check:","Treatment:","Red flag:"][i]}</span> {pt}</div>)}
           <div style={{display:"flex",justifyContent:"space-between",marginTop:8,alignItems:"center"}}><span style={{fontSize:11,color:ds.txL,fontWeight:400}}>Used {p.used}x</span><div style={{display:"flex",gap:8}}><button style={{background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:2,fontSize:12,color:ds.blue,fontWeight:600}}><Edit size={12}/>Edit</button><button style={{background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:2,fontSize:12,color:ds.red,fontWeight:600}}><Trash2 size={12}/>Delete</button></div></div>
         </div>)}
       </div>
