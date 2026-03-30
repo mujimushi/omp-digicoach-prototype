@@ -289,7 +289,7 @@ function TimerScr({config,onComplete,onCancel,pearls,onSavePearl}){
   useEffect(()=>{const ck=()=>setCompact(window.innerWidth<600);ck();window.addEventListener("resize",ck);return()=>window.removeEventListener("resize",ck)},[]);
   const ref=useRef(null);
   useEffect(()=>{if(paused)return;ref.current=setInterval(()=>{setTl(p=>{if(p<=1){if(step<5){setStep(s=>s+1);return 60}else{clearInterval(ref.current);onComplete(elapsed+60);return 0}}return p-1});setElapsed(e=>e+1)},1000);return()=>clearInterval(ref.current)},[paused,step]);
-  useEffect(()=>{if(step===3&&s1Txt.trim()){const m=pearls.find(p=>p.dx.toLowerCase().includes(s1Txt.toLowerCase()));if(m){setSugP(m);setShowSug(true)}}},[step]);
+  useEffect(()=>{if(step===3&&s1Txt.trim()){const m=pearls.find(p=>p.dx.toLowerCase().includes(s1Txt.toLowerCase()));if(m){setSugP(m);setShowSug(true)}else{setShowSug(false)}}else if(step!==3){setShowSug(false)}},[step,s1Txt]);
   useEffect(()=>{if(scrollRef.current)scrollRef.current.scrollTop=0;setShowNote(false);setNote("")},[step]);
   const st=STEPS[step-1];const StepIcon=st.icon;
   const goNext=()=>{if(step<5){setStep(x=>x+1);setTl(60)}else onComplete(elapsed)};
@@ -422,7 +422,7 @@ function TimerScr({config,onComplete,onCancel,pearls,onSavePearl}){
           <div style={{display:"flex",justifyContent:"flex-end",marginTop:10}}><VoiceBtn rec={rec} onTap={toggleRec}/></div>
         </>}
         {/* Quick note for all steps */}
-        <button onClick={()=>setShowNote(!showNote)} style={{width:"100%",padding:"10px",...ds.btnSecondary,fontSize:12,fontWeight:500,color:ds.txB,marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+        <button onClick={()=>{const opening=!showNote;setShowNote(opening);if(opening){setTimeout(()=>{if(scrollRef.current)scrollRef.current.scrollTop=scrollRef.current.scrollHeight},50)}}} style={{width:"100%",padding:"10px",...ds.btnSecondary,fontSize:12,fontWeight:500,color:ds.txB,marginTop:10,display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
           <Edit size={14} color={ds.txL}/><span>{showNote?"Hide note":"Quick note"}</span>
         </button>
         {showNote&&<textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="Quick observation..." rows={2} style={{...ds.input,marginTop:6,resize:"none",background:ds.bdL}}/>}
