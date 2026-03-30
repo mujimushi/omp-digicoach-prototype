@@ -290,7 +290,7 @@ function TimerScr({config,onComplete,onCancel,pearls,onSavePearl}){
   const ref=useRef(null);
   useEffect(()=>{if(paused)return;ref.current=setInterval(()=>{setTl(p=>{if(p<=1){if(step<5){setStep(s=>s+1);return 60}else{clearInterval(ref.current);onComplete(elapsed+60);return 0}}return p-1});setElapsed(e=>e+1)},1000);return()=>clearInterval(ref.current)},[paused,step]);
   useEffect(()=>{if(step===3&&s1Txt.trim()){const m=pearls.find(p=>p.dx.toLowerCase().includes(s1Txt.toLowerCase()));if(m){setSugP(m);setShowSug(true)}}},[step]);
-  useEffect(()=>{if(scrollRef.current)scrollRef.current.scrollTop=0},[step]);
+  useEffect(()=>{if(scrollRef.current)scrollRef.current.scrollTop=0;setShowNote(false);setNote("")},[step]);
   const st=STEPS[step-1];const StepIcon=st.icon;
   const goNext=()=>{if(step<5){setStep(x=>x+1);setTl(60)}else onComplete(elapsed)};
   const goBack=()=>{if(step>1){setStep(x=>x-1);setTl(60)}};
