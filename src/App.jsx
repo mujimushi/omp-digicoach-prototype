@@ -57,21 +57,43 @@ function IconCircle({Icon,color,size=36}){
   </div>);
 }
 
-// ── Phone Frame ──
+// ── Phone Frame (responsive: full-screen on mobile, framed on desktop) ──
 function Phone({children}){
-  return (<div style={{display:"flex",justifyContent:"center",alignItems:"center",minHeight:"100vh",background:ds.screenBg,padding:20,fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif"}}>
-    <div style={{width:390,height:844,borderRadius:44,background:ds.surface,position:"relative",overflow:"hidden",boxShadow:"0 25px 80px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.1)",border:"8px solid #111",display:"flex",flexDirection:"column"}}>
-      <div style={{height:54,display:"flex",alignItems:"flex-end",justifyContent:"space-between",padding:"0 24px 4px",position:"absolute",top:0,left:0,right:0,zIndex:100}}>
-        <span style={{fontSize:14,fontWeight:600,color:ds.navy}}>9:41</span>
-        <div style={{display:"flex",gap:5}}>
-          <svg width="16" height="12" viewBox="0 0 16 12"><path d="M1 8h2v4H1zM5 5h2v7H5zM9 3h2v9H9zM13 0h2v12h-2z" fill={ds.navy}/></svg>
-          <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" stroke={ds.navy} strokeWidth="1" fill="none"/><rect x="22" y="4" width="2" height="4" rx="1" fill={ds.navy}/><rect x="1.5" y="2.5" width="18" height="7" rx="1" fill={ds.navy}/></svg>
-        </div>
+  const[isMobile,setIsMobile]=useState(false);
+  useEffect(()=>{
+    const check=()=>setIsMobile(window.innerWidth<600);
+    check();window.addEventListener("resize",check);
+    return ()=>window.removeEventListener("resize",check);
+  },[]);
+
+  if(isMobile){
+    // Mobile: no frame, fills viewport like a native app
+    return (
+      <div style={{width:"100%",minHeight:"100vh",maxWidth:500,margin:"0 auto",background:ds.surface,position:"relative",overflow:"hidden",display:"flex",flexDirection:"column",fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif"}}>
+        {/* Use real device status bar - add safe area padding */}
+        <div style={{height:"env(safe-area-inset-top, 0px)",flexShrink:0}}/>
+        {children}
+        <div style={{height:"env(safe-area-inset-bottom, 0px)",flexShrink:0}}/>
       </div>
-      {children}
-      <div style={{position:"absolute",bottom:8,left:"50%",transform:"translateX(-50%)",width:134,height:5,borderRadius:3,background:"rgba(0,0,0,0.2)",zIndex:100}}/>
+    );
+  }
+
+  // Desktop: show phone frame mockup
+  return (
+    <div style={{display:"flex",justifyContent:"center",alignItems:"center",minHeight:"100vh",background:ds.screenBg,padding:20,fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif"}}>
+      <div style={{width:390,height:844,borderRadius:44,background:ds.surface,position:"relative",overflow:"hidden",boxShadow:"0 25px 80px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.1)",border:"8px solid #111",display:"flex",flexDirection:"column"}}>
+        <div style={{height:54,display:"flex",alignItems:"flex-end",justifyContent:"space-between",padding:"0 24px 4px",position:"absolute",top:0,left:0,right:0,zIndex:100}}>
+          <span style={{fontSize:14,fontWeight:600,color:ds.navy}}>9:41</span>
+          <div style={{display:"flex",gap:5}}>
+            <svg width="16" height="12" viewBox="0 0 16 12"><path d="M1 8h2v4H1zM5 5h2v7H5zM9 3h2v9H9zM13 0h2v12h-2z" fill={ds.navy}/></svg>
+            <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" stroke={ds.navy} strokeWidth="1" fill="none"/><rect x="22" y="4" width="2" height="4" rx="1" fill={ds.navy}/><rect x="1.5" y="2.5" width="18" height="7" rx="1" fill={ds.navy}/></svg>
+          </div>
+        </div>
+        {children}
+        <div style={{position:"absolute",bottom:8,left:"50%",transform:"translateX(-50%)",width:134,height:5,borderRadius:3,background:"rgba(0,0,0,0.2)",zIndex:100}}/>
+      </div>
     </div>
-  </div>);
+  );
 }
 
 // ── Timer Ring (SVG circle with stroke-dasharray) ──
