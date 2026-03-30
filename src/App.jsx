@@ -69,11 +69,8 @@ function Phone({children}){
   if(isMobile){
     // Mobile: no frame, fills viewport like a native app
     return (
-      <div style={{width:"100%",minHeight:"100vh",maxWidth:500,margin:"0 auto",background:ds.surface,position:"relative",overflow:"hidden",display:"flex",flexDirection:"column",fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif"}}>
-        {/* Use real device status bar - add safe area padding */}
-        <div style={{height:"env(safe-area-inset-top, 0px)",flexShrink:0}}/>
+      <div style={{width:"100%",height:"100dvh",maxWidth:500,margin:"0 auto",background:ds.surface,position:"relative",overflow:"hidden",display:"flex",flexDirection:"column",fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif"}}>
         {children}
-        <div style={{height:"env(safe-area-inset-bottom, 0px)",flexShrink:0}}/>
       </div>
     );
   }
