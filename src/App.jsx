@@ -93,24 +93,26 @@ function Phone({children}){
   );
 }
 
-// ── Timer Ring (SVG circle with stroke-dasharray) ──
-function TimerRing({tl,total,step,paused}){
+// ── Timer Ring (SVG circle with stroke-dasharray, compact mode for mobile) ──
+function TimerRing({tl,total,step,paused,compact}){
   const m=Math.floor(tl/60),s=tl%60;
   const strokeColor=step<=3?ds.blue:ds.gold;
-  const r=82,ci=2*Math.PI*r,progress=tl/total,offset=ci*(1-progress);
+  const sz=compact?130:196;const r=compact?54:82;const sw=compact?6:8;
+  const ci=2*Math.PI*r,progress=tl/total,offset=ci*(1-progress);
+  const cx=sz/2,cy=sz/2;
   return (
-    <div style={{position:"relative",width:196,height:196,margin:"0 auto",flexShrink:0}}>
-      <svg width="196" height="196" style={{transform:"rotate(-90deg)"}}>
-        <circle cx="98" cy="98" r={r} fill="none" stroke={`${strokeColor}20`} strokeWidth="8"/>
-        <circle cx="98" cy="98" r={r} fill="none" stroke={strokeColor} strokeWidth="8"
+    <div style={{position:"relative",width:sz,height:sz,margin:"0 auto",flexShrink:0}}>
+      <svg width={sz} height={sz} style={{transform:"rotate(-90deg)"}}>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={`${strokeColor}20`} strokeWidth={sw}/>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={strokeColor} strokeWidth={sw}
           strokeDasharray={ci} strokeDashoffset={offset} strokeLinecap="round"
           style={{transition:"stroke-dashoffset 0.3s ease"}}/>
       </svg>
       <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
-        <div style={{fontSize:48,fontWeight:700,color:ds.navy,letterSpacing:"-0.02em",fontVariantNumeric:"tabular-nums"}}>
+        <div style={{fontSize:compact?32:48,fontWeight:700,color:ds.navy,letterSpacing:"-0.02em",fontVariantNumeric:"tabular-nums"}}>
           {String(m).padStart(2,"0")}:{String(s).padStart(2,"0")}
         </div>
-        <div style={{fontSize:11,fontWeight:600,color:ds.txL,letterSpacing:3,textTransform:"uppercase",marginTop:2}}>
+        <div style={{fontSize:compact?9:11,fontWeight:600,color:ds.txL,letterSpacing:compact?2:3,textTransform:"uppercase",marginTop:compact?0:2}}>
           {paused?"PAUSED":"SECONDS"}
         </div>
       </div>
@@ -283,6 +285,8 @@ function TimerScr({config,onComplete,onCancel,pearls,onSavePearl}){
   const[showSug,setShowSug]=useState(false);const[sugP,setSugP]=useState(null);
   const[note,setNote]=useState("");const[showNote,setShowNote]=useState(false);
   const scrollRef=useRef(null);
+  const[compact,setCompact]=useState(false);
+  useEffect(()=>{const ck=()=>setCompact(window.innerWidth<600);ck();window.addEventListener("resize",ck);return()=>window.removeEventListener("resize",ck)},[]);
   const ref=useRef(null);
   useEffect(()=>{if(paused)return;ref.current=setInterval(()=>{setTl(p=>{if(p<=1){if(step<5){setStep(s=>s+1);return 60}else{clearInterval(ref.current);onComplete(elapsed+60);return 0}}return p-1});setElapsed(e=>e+1)},1000);return()=>clearInterval(ref.current)},[paused,step]);
   useEffect(()=>{if(step===3&&s1Txt.trim()){const m=pearls.find(p=>p.dx.toLowerCase().includes(s1Txt.toLowerCase()));if(m){setSugP(m);setShowSug(true)}}},[step]);
@@ -295,27 +299,30 @@ function TimerScr({config,onComplete,onCancel,pearls,onSavePearl}){
   const toggleTag=tg=>setS4Tags(p=>p.includes(tg)?p.filter(x=>x!==tg):[...p,tg]);
 
   return (
-    <div style={{flex:1,display:"flex",flexDirection:"column",paddingTop:54,background:ds.surface,minHeight:0}}>
+    <div style={{flex:1,display:"flex",flexDirection:"column",paddingTop:compact?16:54,background:ds.surface,minHeight:0}}>
       {/* Step indicator */}
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 20px 0",flexShrink:0}}>
-        <button onClick={onCancel} style={{background:"none",border:"none",cursor:"pointer",transition:"all 0.2s ease"}}><ChevronLeft size={22} color={ds.txB}/></button>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:compact?"4px 16px 0":"8px 20px 0",flexShrink:0}}>
+        <button onClick={onCancel} style={{background:"none",border:"none",cursor:"pointer",transition:"all 0.2s ease"}}><ChevronLeft size={compact?20:22} color={ds.txB}/></button>
         <div style={{display:"flex",alignItems:"center",gap:6}}>
-          <span style={{fontSize:15,fontWeight:700,color:ds.navy,letterSpacing:"-0.02em"}}>Step {step}</span>
-          <span style={{color:ds.txL,fontSize:13}}>•</span>
-          {[1,2,3,4,5].filter(n=>n!==step).map(n => <span key={n} style={{fontSize:13,fontWeight:n<step?600:400,color:n<step?ds.blue:ds.txL}}>{n}</span>)}
+          <span style={{fontSize:compact?13:15,fontWeight:700,color:ds.navy,letterSpacing:"-0.02em"}}>Step {step}</span>
+          <span style={{color:ds.txL,fontSize:compact?11:13}}>•</span>
+          {[1,2,3,4,5].filter(n=>n!==step).map(n => <span key={n} style={{fontSize:compact?11:13,fontWeight:n<step?600:400,color:n<step?ds.blue:ds.txL}}>{n}</span>)}
         </div>
-        <button style={{background:"none",border:"none",cursor:"pointer"}}><ClipboardList size={18} color={ds.txB}/></button>
+        <button style={{background:"none",border:"none",cursor:"pointer"}}><ClipboardList size={compact?16:18} color={ds.txB}/></button>
       </div>
-      {/* Timer */}
-      <div style={{padding:"12px 0 0",flexShrink:0}}>
-        <div onClick={()=>setPaused(!paused)} style={{cursor:"pointer"}}><TimerRing tl={tl} total={60} step={step} paused={paused}/></div>
+      {/* Progress dots */}
+      <div style={{display:"flex",gap:4,padding:compact?"6px 16px 0":"8px 20px 0",flexShrink:0}}>
+        {STEPS.map((_,i)=><div key={i} style={{flex:1,height:3,borderRadius:2,background:i<step?ds.blue:i===step-1?st.color:`${ds.bd}`,opacity:i<step?1:0.4,transition:"all 0.3s ease"}}/>)}
       </div>
-      {/* Step title */}
-      <div style={{textAlign:"center",padding:"10px 20px 0",flexShrink:0}}>
-        <div style={{display:"inline-flex",alignItems:"center",gap:8,background:`${st.color}15`,padding:"6px 16px",borderRadius:20}}>
-          <StepIcon size={16} color={st.color}/><span style={{fontSize:14,fontWeight:700,color:st.color,letterSpacing:"-0.02em"}}>{st.name}</span>
+      {/* Timer + Step label - compact on mobile */}
+      <div style={{padding:compact?"8px 0 0":"12px 0 0",flexShrink:0}}>
+        <div onClick={()=>setPaused(!paused)} style={{cursor:"pointer"}}><TimerRing tl={tl} total={60} step={step} paused={paused} compact={compact}/></div>
+      </div>
+      <div style={{textAlign:"center",padding:compact?"4px 16px 0":"10px 20px 0",flexShrink:0}}>
+        <div style={{display:"inline-flex",alignItems:"center",gap:6,background:`${st.color}15`,padding:compact?"4px 12px":"6px 16px",borderRadius:20}}>
+          <StepIcon size={compact?14:16} color={st.color}/><span style={{fontSize:compact?12:14,fontWeight:700,color:st.color,letterSpacing:"-0.02em"}}>{st.name}</span>
         </div>
-        <p style={{fontSize:13,color:ds.txB,margin:"4px 0 0",fontWeight:400,lineHeight:1.5}}>{st.instruction}</p>
+        {!compact&&<p style={{fontSize:13,color:ds.txB,margin:"4px 0 0",fontWeight:400,lineHeight:1.5}}>{st.instruction}</p>}
       </div>
       {/* Content */}
       <div ref={scrollRef} style={{flex:1,overflowY:"auto",minHeight:0,padding:"12px 16px 0",WebkitOverflowScrolling:"touch"}}>
