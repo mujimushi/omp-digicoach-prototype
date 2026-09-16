@@ -268,9 +268,11 @@ export function createFixtures(seed = 1) {
       fields.teachingSeconds ??
       (chance(rng, 0.4) ? randomInt(rng, 25, 60) : randomInt(rng, 61, 240));
     const stepSeconds = splitSeconds(teachingSeconds);
-    const ratings = Array.from(
-      { length: 5 },
-      (_, i) => ratingOverrides?.[i] ?? rating(),
+    // An override of null means "not rated", so only a missing override draws a random rating.
+    const ratings = Array.from({ length: 5 }, (_, i) =>
+      ratingOverrides !== undefined && i < ratingOverrides.length
+        ? (ratingOverrides[i] ?? null)
+        : rating(),
     );
     const filled = (list: readonly string[]) =>
       chance(rng, 0.8) ? pick(rng, list) : '';
