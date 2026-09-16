@@ -8,10 +8,11 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "db:migrate": "if [ \"$NODE_ENV\" = production ]; then node dist/db/migrate.js; else node --env-file-if-exists=.env --conditions=development src/db/migrate.ts; fi",
+    "db:migrate": "node bin/run.mjs db/migrate",
     "db:seed": "node --env-file-if-exists=.env --conditions=development src/db/seed.ts",
     "db:reset-test": "node --env-file-if-exists=.env --conditions=development src/db/reset-test.ts",
-    "db:generate": "NODE_OPTIONS=--conditions=development drizzle-kit generate"
+    "db:generate": "NODE_OPTIONS=--conditions=development drizzle-kit generate",
+    "create-admin": "node bin/run.mjs cli/create-admin"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.2",
