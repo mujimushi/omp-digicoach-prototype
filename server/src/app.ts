@@ -5,6 +5,7 @@ import fastifyStatic from '@fastify/static';
 import Fastify, {
   type FastifyInstance,
   type FastifyServerOptions,
+  type RouteOptions,
 } from 'fastify';
 import {
   serializerCompiler,
@@ -15,6 +16,7 @@ import type { Db } from './db/client.ts';
 import { registerAuth } from './plugins/auth.ts';
 import { changeRequestGuard } from './plugins/change-guard.ts';
 import { errorHandler, sendError } from './plugins/errors.ts';
+import { adminRoutes } from './routes/admin/index.ts';
 import { authRoutes } from './routes/auth/index.ts';
 import { healthRoutes } from './routes/health.ts';
 import { meRoutes } from './routes/me/index.ts';
@@ -28,6 +30,8 @@ export type BuildAppOptions = {
   logger?: FastifyServerOptions['logger'];
   /** The server's clock. Tests pass a fixed one. */
   now?: () => Date;
+  /** Told about every route as it is registered. Tests use it to find routes without a permission test. */
+  onRoute?: (route: RouteOptions) => void;
   /** Extra routes under /api, after the login checks. Tests only. */
   extraApiRoutes?: (api: FastifyInstance) => Promise<void>;
 };
@@ -46,6 +50,8 @@ export async function buildApp(
     logger: options.logger ?? { level: 'info', redact: LOG_REDACT },
     trustProxy: config.trustProxy,
   });
+
+  if (options.onRoute) app.addHook('onRoute', options.onRoute);
 
   // 1. Settings and the database.
   app.decorate('config', config);
@@ -84,6 +90,7 @@ export async function buildApp(
       await api.register(authRoutes, { prefix: '/auth' });
       await api.register(meRoutes, { prefix: '/me' });
       await api.register(syncRoutes, { prefix: '/sync' });
+      await api.register(adminRoutes, { prefix: '/admin' });
       if (options.extraApiRoutes) await api.register(options.extraApiRoutes);
       // Scoped to /api, so unknown API paths answer JSON even when a browser asks for HTML.
       api.setNotFoundHandler((request, reply) =>

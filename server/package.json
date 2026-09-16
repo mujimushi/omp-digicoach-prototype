@@ -12,7 +12,8 @@
     "db:seed": "node --env-file-if-exists=.env --conditions=development src/db/seed.ts",
     "db:reset-test": "node --env-file-if-exists=.env --conditions=development src/db/reset-test.ts",
     "db:generate": "NODE_OPTIONS=--conditions=development drizzle-kit generate",
-    "create-admin": "node bin/run.mjs cli/create-admin"
+    "create-admin": "node bin/run.mjs cli/create-admin",
+    "remove-test-records": "node bin/run.mjs cli/remove-test-records"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.2",
