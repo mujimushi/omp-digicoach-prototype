@@ -510,7 +510,8 @@ Ten times the seed data (120 users, 600 students, 4,000 sessions) in a scratch d
 
 ### Choices the plan didn't make
 
-- **The walkthrough build is `phase-6-v1`**, not `rc-1`, because of the fix above. Tag it `rc-2` if a release-candidate name is wanted.
+- **The walkthrough build is `phase-6-v1`**, not `rc-1`, because of the fixes in this phase. Tag it `rc-2` if a release-candidate name is wanted.
+- **Fixed while checking the pull request's "How to try it" steps:** in `npm run dev`, every login and save got 403 "This change must come from the app". Vite's string proxy shorthand sets `changeOrigin: true`, so the server saw `Host: 127.0.0.1:3000` beside `Origin: http://localhost:5180`. The end-to-end tests run against the built server without Vite, so they never went through that proxy. `app/vite.config.ts` now uses `changeOrigin: false`, and `dr.bilal` and `dr.ayesha` log in through `npm run dev` on a freshly seeded database.
 - **The data check is a permanent end-to-end test**, so CI repeats it.
 - **The CSV parser moved to `e2e/support/helpers/csv.ts`**, shared by E2E-15 and the data check.
 - **Found in the review and left for phase 7:** with `trustProxy: true`, `request.ip` is the left-most `X-Forwarded-For` address, so the per-IP login limit depends on what App Platform's router sends. Without `DATABASE_CA_CERT` the server connects without TLS, which DigitalOcean's database refuses, so it fails closed. Both are noted for phase 7.
