@@ -19,13 +19,14 @@ Researched in September 2026 from official documentation, package type definitio
 | `zod` | 4.x | |
 | `@fastify/cookie` / `static` / `rate-limit` / `helmet` | 11.x / 10.x / 11.x / 13.x | |
 | `drizzle-orm` / `drizzle-kit` | 0.45.x / 0.31.x | The stable line. The docs website shows the 1.0 release candidate: don't copy APIs that exist only there. |
-| `pg` | 8.x | |
+| `pg` / `@types/pg` | 8.x / 8.x | `pg` ships an ES module entry, so `import { Pool } from 'pg'` works |
 | `@node-rs/argon2` | 2.2.x | |
 | `vitest` | 5.x | With `@vitest/coverage-v8` and `jsdom` |
 | `@testing-library/react` / `user-event` / `jest-dom` | 16.x / 14.x / current | |
 | `fake-indexeddb` | 6.2.x | |
 | `msw` | 2.x | |
 | `recharts` | 3.x | |
+| `lucide-react` | 1.x | The prototype's icons. Added in phase 3. |
 | `@playwright/test` / `@axe-core/playwright` | 1.63.x / 4.x | |
 | `@biomejs/biome` | 2.x | |
 | `typescript` | 6.0.x | 7.0 is the Go rewrite and has no JavaScript API until 7.1. Vite's `react-ts` template pins 6.0. |
@@ -260,6 +261,22 @@ const router = createBrowserRouter([
 - Tests render routes with a memory router: `createMemoryRouter(routes, { initialEntries: ['/'] })` from `react-router`, passed to `RouterProvider` from `react-router/dom`. `app/src/router.tsx` exports `routes`, and `main.tsx` passes them to `createBrowserRouter`.
 
 Sources: reactrouter.com createBrowserRouter and the v7-to-v8 upgrade guide; vite.dev guide.
+
+## lucide-react (icons)
+
+```tsx
+import { House, Star } from 'lucide-react'
+<Star size={20} color="#D4A76A" strokeWidth={1.5} fill="none" />
+<button type="button" aria-label="Go to students"><House /></button>
+```
+
+- Named imports only. The package is ES modules with `"sideEffects": false`, so only imported icons reach the bundle.
+- Props: `size` (default 24), `color` (default `currentColor`), `strokeWidth` (default 2), and any SVG attribute such as `fill`. `absoluteStrokeWidth` is deprecated; use `nonScalingStroke`.
+- Icons carry `aria-hidden="true"` by default. Put the accessible name on the button, not the icon.
+- Several prototype names are deprecated aliases in 1.x. Use the current names: `House` (not `Home`), `ChartColumn` (`BarChart3`), `Ellipsis` (`MoreHorizontal`), `CircleQuestionMark` (`HelpCircle`), `SquarePen` (`Edit`), `TriangleAlert` (`AlertTriangle`), `Trash` (`Trash2`), `BuildingComplex` (`Building2`).
+- Brand icons were removed in 1.0.
+
+Sources: lucide.dev/guide/react/getting-started, /guide/version-1, /guide/react/migration, /guide/react/advanced/accessibility, /guide/react/advanced/aliased-names; the published `lucide-react@1.46.0` package files.
 
 ## TanStack Query (dashboard only)
 
