@@ -68,6 +68,8 @@ export const loginSessions = pgTable(
       .notNull()
       .defaultNow(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    /** Set when the admin switches the user off: the login no longer works, and says why once. */
+    endedReason: text('ended_reason'),
   },
   (t) => [index('login_sessions_user_id_idx').on(t.userId)],
 );
