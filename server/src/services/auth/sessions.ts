@@ -55,6 +55,9 @@ export type FoundSession = {
   user: UserRow;
 };
 
+/** A login the admin ended by switching the user off. It never works again. */
+export type EndedSession = { endedReason: string };
+
 /**
  * Finds the login for a cookie token and refreshes its last use. Returns null when there is no
  * such login or it has expired; an expired login is deleted.
@@ -63,7 +66,7 @@ export async function findLoginSession(
   db: DbOrTx,
   token: string,
   now: Date,
-): Promise<FoundSession | null> {
+): Promise<FoundSession | EndedSession | null> {
   const id = hashSessionToken(token);
   const [row] = await db
     .select({ session: loginSessions, user: users })
@@ -72,6 +75,11 @@ export async function findLoginSession(
     .where(eq(loginSessions.id, id))
     .limit(1);
   if (!row) return null;
+
+  if (row.session.endedReason) {
+    await db.delete(loginSessions).where(eq(loginSessions.id, id));
+    return { endedReason: row.session.endedReason };
+  }
 
   const rules = sessionRulesFor(row.user);
   const nowMs = now.getTime();
@@ -113,4 +121,16 @@ export async function deleteUserSessions(
         ? eq(loginSessions.userId, userId)
         : and(eq(loginSessions.userId, userId), ne(loginSessions.id, exceptId)),
     );
+}
+
+/** Ends every login of a user who has been switched off, keeping the rows so each phone learns why. */
+export async function endUserSessions(
+  db: DbOrTx,
+  userId: string,
+  reason: 'switched_off',
+): Promise<void> {
+  await db
+    .update(loginSessions)
+    .set({ endedReason: reason })
+    .where(eq(loginSessions.userId, userId));
 }

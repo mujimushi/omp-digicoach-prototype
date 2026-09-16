@@ -56,6 +56,10 @@ export function registerAuth(api: FastifyInstance) {
       request.authProblem = 'expired';
       return;
     }
+    if ('endedReason' in found) {
+      request.authProblem = 'switched_off';
+      return;
+    }
     if (!found.user.active) {
       await deleteUserSessions(api.db, found.user.id);
       request.authProblem = 'switched_off';
