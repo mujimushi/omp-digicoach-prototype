@@ -20,7 +20,7 @@ const CASE_TYPES = [
 const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year', 'Final Year'];
 
 for (const width of WIDTHS) {
-  test(`E2E-B3 layout at ${width} px: chips keep their width and starter boxes aren't cut off`, async ({
+  test(`E2E-14 (E2E-B3) layout at ${width} px: chips don't move when selected, and text boxes aren't cut off`, async ({
     doctorPage: page,
   }) => {
     await page.setViewportSize({ width, height: 800 });
