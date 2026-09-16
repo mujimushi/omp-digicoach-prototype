@@ -1,6 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-
-const baseURL = 'http://localhost:3000';
+import { BASE_URL, TEST_SERVER_ENV } from './support/env.ts';
 
 export default defineConfig({
   testDir: './tests',
@@ -8,7 +7,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
-    baseURL,
+    baseURL: BASE_URL,
     trace: 'on-first-retry',
   },
   projects: [
@@ -17,17 +16,12 @@ export default defineConfig({
     { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] } },
   ],
   webServer: {
-    command: 'npm run build && npm run start -w server',
+    // Builds the app, resets the omp_e2e database and starts the server in test mode.
+    command: 'npm run start:test',
     cwd: '..',
-    url: `${baseURL}/api/health`,
+    url: `${BASE_URL}/api/health`,
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    env: {
-      NODE_ENV: 'production',
-      PORT: '3000',
-      DATABASE_URL:
-        process.env.DATABASE_URL ?? 'postgres://omp:omp@localhost:5434/omp',
-      SESSION_COOKIE_NAME: 'omp_session',
-    },
+    timeout: 180_000,
+    env: TEST_SERVER_ENV,
   },
 });
