@@ -7,11 +7,43 @@ on:
 permissions:
   contents: read
 
-jobs:
-  check:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+# A new push to a branch cancels that branch's older runs.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
+env:
+  DATABASE_URL: postgres://omp:omp@localhost:5432/omp
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run test:unit -- --coverage.enabled --coverage.reporter=text-summary
+
+  server:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:16
@@ -26,37 +58,101 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
-
-    env:
-      DATABASE_URL: postgres://omp:omp@localhost:5432/omp
-
     steps:
       - uses: actions/checkout@v7
-
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
-
       - run: npm ci
+      - run: npm run test:server -- --coverage.enabled --coverage.reporter=text-summary
 
-      - run: npm run typecheck
-
-      - run: npm run lint
-
-      - run: npm run test:unit
-
-      - run: npm run test:server
-
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
       - run: npm run build
+      - run: npm run check:bundle
+      - uses: actions/upload-artifact@v7
+        with:
+          name: build
+          path: |
+            app/dist
+            server/dist
+            shared/dist
+          retention-days: 7
 
+  e2e:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: omp
+          POSTGRES_PASSWORD: omp
+          POSTGRES_DB: omp
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v8
+        with:
+          name: build
+      # Browsers are installed fresh each run, never cached.
       - run: npx playwright install --with-deps
-
-      - run: npm run test:e2e
-
+      - run: npm run test:e2e -- --shard=${{ matrix.shard }}/2
+        env:
+          SKIP_BUILD: '1'
       - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
+          name: blob-report-${{ matrix.shard }}
+          path: e2e/blob-report
+          retention-days: 7
+
+  e2e-report:
+    needs: e2e
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v8
+        with:
+          path: e2e/all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+      - run: npx playwright merge-reports --reporter html ./all-blob-reports
+        working-directory: e2e
+      - uses: actions/upload-artifact@v7
+        with:
           name: playwright-report
-          path: e2e/playwright-report/
+          path: e2e/playwright-report
           retention-days: 14
