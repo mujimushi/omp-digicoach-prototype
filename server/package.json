@@ -8,13 +8,22 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "db:migrate": "echo 'db:migrate: no migrations until phase 2 (Contracts)' && exit 1",
-    "db:seed": "echo 'db:seed: no seed data until phase 2 (Contracts)' && exit 1",
-    "db:reset-test": "echo 'db:reset-test: no tables until phase 2 (Contracts)' && exit 1"
+    "db:migrate": "if [ \"$NODE_ENV\" = production ]; then node dist/db/migrate.js; else node --env-file-if-exists=.env --conditions=development src/db/migrate.ts; fi",
+    "db:seed": "node --env-file-if-exists=.env --conditions=development src/db/seed.ts",
+    "db:reset-test": "node --env-file-if-exists=.env --conditions=development src/db/reset-test.ts",
+    "db:generate": "NODE_OPTIONS=--conditions=development drizzle-kit generate"
   },
   "dependencies": {
     "@fastify/static": "10.1.3",
+    "@node-rs/argon2": "2.2.1",
+    "@omp/shared": "0.0.0",
+    "drizzle-orm": "0.45.2",
     "fastify": "5.12.5",
+    "pg": "8.23.0",
     "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1",
+    "drizzle-kit": "0.31.10"
   }
 }
