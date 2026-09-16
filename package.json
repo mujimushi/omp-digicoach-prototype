@@ -15,10 +15,10 @@
     "dev": "concurrently --names server,app --kill-others-on-fail \"npm run dev -w server\" \"npm run dev -w app\"",
     "build": "npm run build -w shared && npm run build -w app && npm run build -w server",
     "check": "npm run typecheck && npm run lint && npm run test:unit && npm run test:server",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p scripts",
     "lint": "biome ci .",
     "format": "biome check --write .",
-    "test:unit": "vitest run --project shared --project app",
+    "test:unit": "vitest run --project shared --project app --project scripts",
     "test:server": "vitest run --project server",
     "test:e2e": "npm run test -w e2e",
     "db:up": "docker compose up --wait",
@@ -26,13 +26,17 @@
     "db:migrate": "npm run db:migrate -w server",
     "db:seed": "npm run db:seed -w server",
     "db:reset-test": "npm run db:reset-test -w server",
-    "start:test": "NODE_ENV=production npm run build && npm run db:reset-test && npm run start -w server"
+    "start:test": "if [ -z \"$SKIP_BUILD\" ]; then NODE_ENV=production npm run build; fi && npm run db:reset-test && npm run start -w server",
+    "check:bundle": "node scripts/check-bundle.ts app/dist",
+    "check:migrations": "node scripts/check-migrations.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
     "@types/node": "22.20.3",
+    "@types/pg": "8.23.1",
     "@vitest/coverage-v8": "5.0.1",
     "concurrently": "10.0.5",
+    "pg": "8.23.0",
     "typescript": "6.0.3",
     "vitest": "5.0.1"
   }
