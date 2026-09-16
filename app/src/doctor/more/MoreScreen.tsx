@@ -6,12 +6,15 @@ import {
   Star,
   TriangleAlert,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { useAuth, useUser } from '../../auth/AuthProvider.tsx';
+import { InstallGuide } from '../../install/InstallGuide.tsx';
+import { useSyncStatus } from '../../offline/useSyncStatus.ts';
 import { ds } from '../../styles/tokens.ts';
 import { Button } from '../../ui/Button.tsx';
 import { Card } from '../../ui/Card.tsx';
+import { ConfirmDialog } from '../../ui/ConfirmDialog.tsx';
 import { IconCircle } from '../../ui/IconCircle.tsx';
 import { ScreenHeader } from '../components/ScreenHeader.tsx';
 import { APP_VERSION } from '../session/draft.ts';
@@ -73,19 +76,21 @@ function MenuLink({
 }
 
 /** Pearls, About, the install guide, items needing attention, the app version and Log out. */
-export function MoreScreen({ installGuide }: { installGuide?: ReactNode }) {
+export function MoreScreen() {
   const user = useUser();
   const { logout } = useAuth();
   const pearls = useRepositoryQuery((repo) => repo.listMyPearls(), []);
   const attention = useRepositoryQuery((repo) => repo.listNeedsAttention(), []);
   const pearlCount = pearls.data?.length ?? 0;
   const problems = attention.data ?? [];
+  const { waiting } = useSyncStatus();
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   return (
     <>
       <ScreenHeader title="More" subtitle={user.name} />
       <div style={{ flex: 1, padding: '0 16px 24px' }}>
-        {installGuide}
+        <InstallGuide dismissible={false} />
         {problems.length > 0 && (
           <Card accent={ds.red} style={{ marginBottom: 12 }}>
             <h2
@@ -141,7 +146,10 @@ export function MoreScreen({ installGuide }: { installGuide?: ReactNode }) {
           variant="secondary"
           fullWidth
           icon={<LogOut size={16} />}
-          onClick={() => void logout()}
+          onClick={() => {
+            if (waiting > 0) setConfirmLogout(true);
+            else void logout();
+          }}
           style={{ marginTop: 16 }}
         >
           Log out
@@ -157,6 +165,23 @@ export function MoreScreen({ installGuide }: { installGuide?: ReactNode }) {
           OMP DigiCoach version {APP_VERSION}
         </p>
       </div>
+      <ConfirmDialog
+        open={confirmLogout}
+        title={
+          waiting === 1
+            ? '1 item hasn’t been sent'
+            : `${waiting} items haven’t been sent`
+        }
+        confirmLabel="Log out and delete them"
+        onCancel={() => setConfirmLogout(false)}
+        onConfirm={() => {
+          setConfirmLogout(false);
+          void logout();
+        }}
+      >
+        Logging out deletes everything saved on this phone, including these.
+        Find signal and wait for them to send first.
+      </ConfirmDialog>
     </>
   );
 }

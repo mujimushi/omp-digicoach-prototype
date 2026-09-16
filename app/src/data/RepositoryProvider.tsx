@@ -1,4 +1,3 @@
-import { KNOWN_STUDENTS } from '@omp/shared/fixtures';
 import {
   createContext,
   type ReactNode,
@@ -8,24 +7,12 @@ import {
   useState,
 } from 'react';
 import { useUser } from '../auth/AuthProvider.tsx';
-import { createMemoryRepository } from './memory-repository.ts';
+import { createRepository } from '../offline/dexie-repository.ts';
 import type { Repository } from './repository.ts';
 
-/**
- * The one place that decides which storage the doctor app uses. For now it is the memory
- * repository, holding the known test students so the screens have data; lane 4C switches it to
- * storage on the phone.
- */
-export function createAppRepository(userId: string): Repository {
-  const at = new Date(0).toISOString();
-  return createMemoryRepository({
-    doctorId: userId,
-    students: KNOWN_STUDENTS.map((student) => ({
-      ...student,
-      createdAt: at,
-      updatedAt: at,
-    })),
-  });
+/** The one place that decides which storage the doctor app uses: IndexedDB on the phone. */
+export function createAppRepository(): Repository {
+  return createRepository();
 }
 
 /** Tells listeners after every save, so screens reload their lists. */
@@ -83,12 +70,9 @@ export function RepositoryProvider({
   const notifyChanged = useCallback(() => setVersion((v) => v + 1), []);
 
   // One repository per logged-in user.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new user gets a new repository
   const wrapped = useMemo(
-    () =>
-      withChangeNotices(
-        repository ?? createAppRepository(userId),
-        notifyChanged,
-      ),
+    () => withChangeNotices(repository ?? createAppRepository(), notifyChanged),
     [repository, userId, notifyChanged],
   );
 

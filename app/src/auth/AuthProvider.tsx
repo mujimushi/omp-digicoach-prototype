@@ -9,22 +9,26 @@ import {
   useState,
 } from 'react';
 import { useNavigate } from 'react-router';
+import { apiGet, apiSend, setUnauthorizedHandler } from '../api/client.ts';
+import { ApiRequestError, NetworkError } from '../api/errors.ts';
 import {
-  ApiRequestError,
-  apiGet,
-  apiSend,
-  setUnauthorizedHandler,
-} from '../api/client.ts';
+  assertLoginAllowed,
+  cachedUser,
+  clearPhoneData,
+  LoginBlockedError,
+  rememberUser,
+} from '../offline/phone-auth.ts';
 
 export type AuthState =
   | { status: 'loading' }
   | { status: 'anonymous'; message: string | null }
-  | { status: 'authenticated'; user: PublicUser };
+  | { status: 'authenticated'; user: PublicUser; offline?: boolean };
 
 export type AuthContextValue = {
   state: AuthState;
   user: PublicUser | null;
   login: (username: string, password: string) => Promise<PublicUser>;
+  /** Ends the login and deletes everything on the phone. */
   logout: () => Promise<void>;
   changePassword: (
     currentPassword: string,
@@ -32,6 +36,8 @@ export type AuthContextValue = {
   ) => Promise<void>;
   /** Reloads the user from the server. */
   refresh: () => Promise<void>;
+  /** Shows the login screen with a message, keeping everything on the phone. */
+  expireLogin: (message: string | null) => void;
 };
 
 /** Exported for tests, which provide a user without the server. */
@@ -52,8 +58,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const user = await apiGet('/api/me', PublicUserSchema, {
         redirectOnUnauthorized: false,
       });
+      try {
+        await rememberUser(user);
+      } catch (error) {
+        if (!(error instanceof LoginBlockedError)) throw error;
+        await apiSend('POST', '/api/auth/logout', {}, undefined, {
+          redirectOnUnauthorized: false,
+        }).catch(() => undefined);
+        setState({ status: 'anonymous', message: error.message });
+        return;
+      }
       setState({ status: 'authenticated', user });
     } catch (error) {
+      if (error instanceof NetworkError) {
+        // No signal: open with the last user on this phone, as an installed app must.
+        const user = await cachedUser().catch(() => undefined);
+        setState(
+          user
+            ? { status: 'authenticated', user, offline: true }
+            : {
+                status: 'anonymous',
+                message: 'No connection. The first login needs signal.',
+              },
+        );
+        return;
+      }
       const message =
         error instanceof ApiRequestError && error.message !== 'Please log in.'
           ? error.message
@@ -76,13 +105,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const login = useCallback(async (username: string, password: string) => {
+    await assertLoginAllowed(username);
     const user = await apiSend(
       'POST',
       '/api/auth/login',
       { username, password },
       PublicUserSchema,
-      { redirectOnUnauthorized: false },
+      {
+        redirectOnUnauthorized: false,
+      },
     );
+    try {
+      await rememberUser(user);
+    } catch (error) {
+      await apiSend('POST', '/api/auth/logout', {}, undefined, {
+        redirectOnUnauthorized: false,
+      }).catch(() => undefined);
+      throw error;
+    }
     setState({ status: 'authenticated', user });
     return user;
   }, []);
@@ -92,7 +132,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiSend('POST', '/api/auth/logout', {}, undefined, {
         redirectOnUnauthorized: false,
       });
+    } catch {
+      // Offline or already logged out: the phone's data still goes.
     } finally {
+      await clearPhoneData().catch(() => undefined);
       setState({ status: 'anonymous', message: null });
       navigate('/login', { replace: true });
     }
@@ -109,6 +152,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [loadUser],
   );
 
+  const expireLogin = useCallback((message: string | null) => {
+    setState({ status: 'anonymous', message });
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       state,
@@ -117,8 +164,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       changePassword,
       refresh: loadUser,
+      expireLogin,
     }),
-    [state, login, logout, changePassword, loadUser],
+    [state, login, logout, changePassword, loadUser, expireLogin],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

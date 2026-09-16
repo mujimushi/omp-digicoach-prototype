@@ -27,6 +27,7 @@ export function renderDoctorApp({
     logout: vi.fn(),
     changePassword: vi.fn(),
     refresh: vi.fn(),
+    expireLogin: vi.fn(),
   };
   const router = createMemoryRouter(
     [

@@ -458,3 +458,51 @@ describe('student progress', () => {
     expect(screen.queryByText('Also theirs')).not.toBeInTheDocument();
   });
 });
+
+describe('logging out', () => {
+  it('asks first when items are waiting, and logs out only after confirming', async () => {
+    const { getPhoneDb } = await import('../offline/db.ts');
+    await getPhoneDb().outbox.clear();
+    await getPhoneDb().outbox.add({
+      opId: fixtures.uuid(),
+      type: 'student.upsert',
+      payload: {},
+      attempts: 0,
+      createdAt: new Date().toISOString(),
+      summary: 'Student X',
+    });
+    const user = userEvent.setup();
+    const { auth } = renderDoctorApp({
+      path: '/more',
+      repository: repositoryWith(),
+      user: doctor,
+    });
+
+    await user.click(await screen.findByRole('button', { name: 'Log out' }));
+    const dialog = await screen.findByRole('alertdialog', {
+      name: '1 item hasn’t been sent',
+    });
+    expect(auth.logout).not.toHaveBeenCalled();
+
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Log out and delete them' }),
+    );
+    expect(auth.logout).toHaveBeenCalledTimes(1);
+    await getPhoneDb().outbox.clear();
+  });
+
+  it('logs out straight away when nothing is waiting', async () => {
+    const { getPhoneDb } = await import('../offline/db.ts');
+    await getPhoneDb().outbox.clear();
+    const user = userEvent.setup();
+    const { auth } = renderDoctorApp({
+      path: '/more',
+      repository: repositoryWith(),
+      user: doctor,
+    });
+    // Wait for the waiting count to load as 0.
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    await user.click(await screen.findByRole('button', { name: 'Log out' }));
+    expect(auth.logout).toHaveBeenCalledTimes(1);
+  });
+});

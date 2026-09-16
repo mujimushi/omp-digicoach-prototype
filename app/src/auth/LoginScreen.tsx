@@ -2,15 +2,17 @@ import { APP_NAME } from '@omp/shared';
 import { Lock, User } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router';
-import { ApiRequestError, NetworkError } from '../api/client.ts';
+import { ApiRequestError, NetworkError } from '../api/errors.ts';
 import { Logo } from '../layout/Logo.tsx';
 import { Splash } from '../layout/Splash.tsx';
+import { LoginBlockedError } from '../offline/phone-auth.ts';
 import { ds } from '../styles/tokens.ts';
 import { Button } from '../ui/Button.tsx';
 import { TextField } from '../ui/TextField.tsx';
 import { homeFor, useAuth } from './AuthProvider.tsx';
 
 function loginErrorMessage(error: unknown): string {
+  if (error instanceof LoginBlockedError) return error.message;
   if (error instanceof NetworkError) {
     return 'No connection. The first login needs signal.';
   }

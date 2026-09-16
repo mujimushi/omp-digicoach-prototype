@@ -3,11 +3,18 @@ import {
   Ellipsis,
   FileText,
   TrendingUp,
+  TriangleAlert,
   Users,
 } from 'lucide-react';
 import { Outlet, useLocation } from 'react-router';
+import { useAuth } from '../auth/AuthProvider.tsx';
 import { RepositoryProvider } from '../data/RepositoryProvider.tsx';
 import { ResumeGate } from '../doctor/session/ResumeGate.tsx';
+import { SyncProvider } from '../offline/SyncProvider.tsx';
+import {
+  useSyncLoginMessage,
+  useSyncStatus,
+} from '../offline/useSyncStatus.ts';
 import { ds } from '../styles/tokens.ts';
 import { type Tab, TabBar } from '../ui/TabBar.tsx';
 
@@ -19,6 +26,51 @@ export const DOCTOR_TABS: readonly Tab[] = [
   { to: '/more', label: 'More', Icon: Ellipsis },
 ];
 
+/** When a sync finds the login has ended: say why, keep everything, and offer to log in. */
+function LoginNeededBanner() {
+  const { state, waiting } = useSyncStatus();
+  const message = useSyncLoginMessage();
+  const { expireLogin } = useAuth();
+  if (state !== 'login_needed') return null;
+  const kept =
+    waiting === 1 ? '1 saved item is kept' : `${waiting} saved items are kept`;
+  return (
+    <div
+      role="alert"
+      style={{
+        background: ds.warmDk,
+        color: ds.txW,
+        padding: 'calc(10px + env(safe-area-inset-top)) 16px 10px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        flexShrink: 0,
+      }}
+    >
+      <TriangleAlert size={18} style={{ flexShrink: 0 }} />
+      <span style={{ flex: 1, fontSize: 13 }}>
+        {message ?? 'Your login has ended.'} {kept} on this phone.
+      </span>
+      <button
+        type="button"
+        onClick={() => expireLogin(message)}
+        style={{
+          background: '#fff',
+          color: ds.warmDk,
+          border: 'none',
+          borderRadius: 10,
+          padding: '8px 10px',
+          fontWeight: 700,
+          minHeight: 40,
+          cursor: 'pointer',
+        }}
+      >
+        Log in
+      </button>
+    </div>
+  );
+}
+
 /** Phone-first: one column up to 500 px wide, the screen above and the tabs below. */
 export function DoctorLayout() {
   const { pathname } = useLocation();
@@ -27,32 +79,35 @@ export function DoctorLayout() {
 
   return (
     <RepositoryProvider>
-      <ResumeGate>
-        <div
-          style={{
-            height: '100dvh',
-            maxWidth: 500,
-            margin: '0 auto',
-            display: 'flex',
-            flexDirection: 'column',
-            background: ds.surface,
-            position: 'relative',
-          }}
-        >
+      <SyncProvider>
+        <ResumeGate>
           <div
             style={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: 'auto',
+              height: '100dvh',
+              maxWidth: 500,
+              margin: '0 auto',
               display: 'flex',
               flexDirection: 'column',
+              background: ds.surface,
+              position: 'relative',
             }}
           >
-            <Outlet />
+            <LoginNeededBanner />
+            <div
+              style={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+            >
+              <Outlet />
+            </div>
+            {showTabs && <TabBar tabs={DOCTOR_TABS} />}
           </div>
-          {showTabs && <TabBar tabs={DOCTOR_TABS} />}
-        </div>
-      </ResumeGate>
+        </ResumeGate>
+      </SyncProvider>
     </RepositoryProvider>
   );
 }
