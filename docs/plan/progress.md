@@ -4,7 +4,7 @@ Branch `build-v1`, one pull request into `main` at the end. Each phase's last co
 
 ## Resume here
 
-**Next: phase 6** (`docs/plan/06-verification.md`). Phases 2 to 5 are done; phase 5's person checks are listed under Needs a person. The optional stop after phase 2 was skipped: Sadia asked for no review stops.
+**Phases 2 to 6 are done**, apart from the checks under Needs a person. Next: the pull request from `build-v1` into `main`, Sadia's reviews and Prof. Muneeza's walkthrough, then phase 7 once the DigitalOcean account exists. The optional stop after phase 2 was skipped: Sadia asked for no review stops.
 
 Where things are, for the next session:
 
@@ -31,7 +31,7 @@ Where things are, for the next session:
 | 4D Admin dashboard | Done | `phase-4d-v1` |
 | 4E Quality and deploy prep | Done | `phase-4e-v1` |
 | 5 Integration and hardening | Done, except the person checks | `rc-1` |
-| 6 Verification gate | Not started | |
+| 6 Verification gate | Done, except the person checks | `phase-6-v1` |
 
 ## Phase 2: Contracts
 
@@ -469,6 +469,53 @@ Ten times the seed data (120 users, 600 students, 4,000 sessions) in a scratch d
 - **`expectAllSent()` reads the phone's outbox** before checking the badge. On WebKit the badge still showed "All sent" for a moment after a save, so tests read the database before the push.
 - **`rc-1` is on `build-v1`.** `main` carries it after the pull request merges.
 
+## Phase 6: Verification gate
+
+### Checklist
+
+**1. Anti-pattern script**
+
+- [x] `scripts/check-anti-patterns.sh` runs every search in the phase table, plus the other lines of the anti-pattern table that a search can find: `navigator.onLine` outside the sync badge, a `vitest.workspace` file, positional `useQuery`, Drizzle table options as an object, `"recommended": true`, TypeScript run in production, and migrations in the web service's `run_command`. With `--dist` it also searches `app/dist` for `msw` and `memory-repository`.
+- [x] It runs in `npm run check`, in the CI `static` job, and with `--dist` in the `build` job after the build.
+- [x] Each search failed once on planted code: bad lines added to new files in `app/src`, `e2e` and `server/src`, and to copies of `app/vite.config.ts`, `ci.yml`, `.do/app.yaml`, `biome.json` and `server/package.json`, restored afterwards. All searches failed except the `vitest.workspace` text search, which the planted file doesn't contain; the file-name check caught it.
+
+**2. Review against the documentation**
+
+- [x] Fastify: app factory, hooks, both not-found handlers, cookie, rate limit, helmet (with `worker-src` and `manifest-src`, tested), static files, listen host.
+- [x] Zod type provider on every route. Logout has no schema and four routes answering 204 or CSV have no response schema; none of them has a body to check.
+- [x] Drizzle: array table options, partial unique index on `pmdc_number`, `lower(username)` unique index, `migrate()` with `migrationsFolder`, SSL through `ssl` with `sslmode` removed from the URL.
+- [x] Passwords and login: Argon2id settings, dummy hash, 15 to 128 characters, 10,001 common passwords plus the app name and username, temporary password format, SHA-256 token storage, cookie flags and the production start check, session lengths, change-request guard, failed-login delays and the per-IP limit. Two differences from `00-allowed-apis.md` are now noted there: switch-off ends login rows instead of deleting them (phase 4D), and a locked username gets 429 as `api.md` lists.
+- [x] vite-plugin-pwa: `prompt`, admin JavaScript and CSS left out of the precache, no `runtimeCaching`.
+- [x] Dexie: versioned schema; every save runs in a transaction. **Fixed here:** the sync engine saved the pull cursor before remapping aliased students, and removed a sent item before remapping its student, in separate transactions. If the app closed between the two, a student could show twice. Both now run in one transaction, and so does the login handover in `phone-auth.ts`. Two new tests fail on the old code and pass now.
+- [x] Playwright: device names, `clock.install` before `goto` in every clock test, browsers installed fresh in CI.
+- [x] DigitalOcean spec: `apps-s-1vcpu-1gb`, a `PRE_DEPLOY` migrate job, run-time variables bound to the database, no secrets. Validation waits for phase 7.
+
+**3. Final automated run**
+
+- [ ] CI is green on `main` for `rc-1`. **Needs the merge.** On `build-v1`, CI run [35161603128](https://github.com/sadiash/omp-digicoach/actions/runs/35161603128) is green at `rc-1`, and the pull request shows the run for `phase-6-v1`.
+- [ ] The nightly run is green three nights in a row. **Needs a person:** the nightly workflow runs only from `main`.
+- [x] Coverage meets each target: `timer.ts` 100% of lines, `offline/sync.ts` 96.0%, `services/sync/` 100%, `services/students/` 100%, `services/reports/` 100%, `services/doctors/` 94.6%.
+- [x] The migration safety check passes with `--base phase-4a-v1`: that server still answers health, login, push and pull on this branch's migrations, with row counts unchanged. There is no `release-*` tag yet.
+- [x] `npm audit --omit=dev`: 0 vulnerabilities.
+
+**4. Data check** (`e2e/tests/integration/18-data-check.spec.ts`, phone Chromium with the admin at a desk)
+
+- [x] The phone records 12 sessions offline, with different step times, ratings, pauses and quick logs, then sends them. The phone's 18 sessions (12 plus the 6 seeded for that doctor) match the 18 database rows one for one, field by field, steps included.
+- [x] The overview's averages for this month (teaching time, extra time, rating per step), sessions this week, active doctors and students equal the same figures in SQL, and the overview page shows the SQL teaching average. Both known doctors' activity rows (sessions, students, average times, share with all steps rated) equal SQL.
+- [x] The CSV has one row per session, and 20 rows (the 12 recorded and 8 others) equal the database rows in all 35 columns. Dates and times are formatted in Pakistan time in the test itself. A diagnosis starting with `=` comes out with a leading apostrophe. Changing one expected cell makes the test fail.
+
+**5. Client approval**
+
+- [ ] Prof. Muneeza's walkthrough and approval, recorded in an issue. **Needs a person.** Use the build at `phase-6-v1`, which carries the Dexie fix made after `rc-1`.
+
+### Choices the plan didn't make
+
+- **The walkthrough build is `phase-6-v1`**, not `rc-1`, because of the fix above. Tag it `rc-2` if a release-candidate name is wanted.
+- **The data check is a permanent end-to-end test**, so CI repeats it.
+- **The CSV parser moved to `e2e/support/helpers/csv.ts`**, shared by E2E-15 and the data check.
+- **Found in the review and left for phase 7:** with `trustProxy: true`, `request.ip` is the left-most `X-Forwarded-For` address, so the per-IP login limit depends on what App Platform's router sends. Without `DATABASE_CA_CERT` the server connects without TLS, which DigitalOcean's database refuses, so it fails closed. Both are noted for phase 7.
+- **Ended and expired login rows stay** until that phone calls again. They hold only a token hash, the user ID and times, and no token in them works. Nothing in the plan asks for a cleanup.
+
 ## Versions
 
 Every package added so far matches the major in `00-allowed-apis.md`: drizzle-orm 0.45.2, drizzle-kit 0.31.10, pg 8.23.0, @types/pg 8.23.1, @node-rs/argon2 2.2.1, msw 2.15.0, zod 4.6.5, @fastify/cookie 11.1.2, @fastify/rate-limit 11.2.0, @fastify/helmet 13.1.1, fastify-type-provider-zod 7.0.0, @testing-library/user-event 14.6.7.
@@ -489,4 +536,6 @@ Every package added so far matches the major in `00-allowed-apis.md`: drizzle-or
 - Validating `.do/app.yaml` with `doctl` (phase 7).
 - The real-phone table on an iPhone and a mid-range Android phone, including the day 1 / day 9 check and opening in under 3 seconds (phase 5).
 - The one-hour bug bash with a second person, and fixing its `before-launch` issues (phase 5).
-- The nightly workflow green two nights in a row (phase 5).
+- The nightly workflow green two nights in a row (phase 5), then three nights (phase 6).
+- CI green on `main` after the merge, and Prof. Muneeza's walkthrough with her approval recorded in an issue (phase 6).
+- Phase 7: what App Platform's router sends in `X-Forwarded-For`, and a production database connection verified with `DATABASE_CA_CERT`.
