@@ -28,6 +28,12 @@ Researched in September 2026 from official documentation, package type definitio
 | `recharts` | 3.x | |
 | `@playwright/test` / `@axe-core/playwright` | 1.63.x / 4.x | |
 | `@biomejs/biome` | 2.x | |
+| `typescript` | 6.0.x | 7.0 is the Go rewrite and has no JavaScript API until 7.1. Vite's `react-ts` template pins 6.0. |
+| `@types/node` / `@types/react` / `@types/react-dom` | 22.x / 19.x / 19.x | `@types/node` follows the Node major |
+| `@testing-library/dom` | 10.x | Required by `@testing-library/react` 16 and `jest-dom` 7 |
+| `jsdom` | 30.x | Needs Node 22.22.2 or later |
+| `concurrently` | 10.x | Runs the server and Vite together in `npm run dev`. Needs Node 22. |
+| `actions/checkout` | v7 | |
 | GitHub Actions | `actions/setup-node@v7`, `actions/upload-artifact@v7`, `actions/download-artifact@v8` | Playwright's example workflows show older majors |
 | PostgreSQL | 16 locally and in CI | Match the DigitalOcean cluster's major version when it is created |
 
@@ -36,8 +42,40 @@ Researched in September 2026 from official documentation, package type definitio
 - Root `package.json`: `"workspaces": ["app", "server", "shared", "e2e"]`.
 - Run in one workspace: `npm run <script> -w server`. Run everywhere it exists: `npm run <script> --workspaces --if-present`.
 - Add a package to one workspace: `npm install <pkg> -w app`.
+- Package names are `@omp/app`, `@omp/server`, `@omp/shared` and `@omp/e2e`. `-w` also accepts the folder name.
+- The root `.npmrc` sets `save-exact=true`, so `npm install` pins exact versions.
 
 Source: docs.npmjs.com, "workspaces".
+
+## Node.js 22 and TypeScript
+
+- `tsconfig.base.json` holds the shared compiler settings, and each workspace's `tsconfig.json` extends it. TypeScript 6 defaults `types` to `[]`, so a workspace lists what it needs, such as `"types": ["node"]`.
+- In development the server runs its `.ts` files directly: `node --watch --env-file-if-exists=.env --conditions=development src/server.ts`. Node 22.18 and later strip types without a flag or warning.
+- Type stripping needs `.ts` at the end of relative imports, `import type` for types, and no enums, parameter properties or runtime namespaces. `erasableSyntaxOnly` and `verbatimModuleSyntax` make `tsc` enforce these. `rewriteRelativeImportExtensions` turns `.ts` into `.js` when `tsc` emits.
+- Node won't strip types under `node_modules`. Workspace links resolve to their real folder, so `shared/src` works.
+- `--env-file-if-exists=.env` loads `.env` when it exists. A variable already set in the environment wins over the file.
+- In production the server runs compiled JavaScript: `npm run build -w server` emits `server/dist`, and `npm run start -w server` runs `node dist/server.js`. Type stripping is only a release candidate in Node 22.
+
+**The shared package** exports its source in development and its build in production:
+
+```json
+"exports": { ".": { "development": "./src/index.ts", "types": "./dist/index.d.ts", "default": "./dist/index.js" } }
+```
+
+- Vite and Vitest add the `development` condition unless `NODE_ENV` is `production`. `tsc` gets it from `customConditions: ["development"]` in `tsconfig.base.json`, and the server's dev script from `--conditions=development`.
+- `vite build` and `node dist/server.js` use `default`, so `npm run build` builds `shared` first. Each `tsconfig.build.json` sets `customConditions: []`.
+
+Sources: nodejs.org/api/typescript.html and cli.html (Node 22); typescriptlang.org TSConfig reference; devblogs.microsoft.com "Announcing TypeScript 6.0" and "Announcing TypeScript 7.0"; vite.dev `resolve.conditions`.
+
+## Docker Compose (local database)
+
+- `docker-compose.yml` runs `postgres:16` with a named volume and a health check: `test: ["CMD-SHELL", "pg_isready -U omp -d omp"]`.
+- The container's port 5432 is published on `127.0.0.1:5434`, because other projects on the main development Mac use 5432 and 5433. CI keeps 5432.
+- `docker compose up --wait` starts the services in the background and returns once the health check passes.
+- `docker compose down` removes the container and keeps the named volume. `docker compose down -v` also deletes the data.
+- Leave out the top-level `version:` key, which is obsolete.
+
+Sources: docs.docker.com `compose up`, `compose down`, "Control startup order", "Version and name top-level elements".
 
 ## Fastify 5
 
@@ -59,6 +97,8 @@ export function buildApp(opts = {}) {
 - **Cookies** (`@fastify/cookie`): `reply.setCookie(name, value, { httpOnly, secure, sameSite, path, maxAge })`; read `request.cookies[name]`; `reply.clearCookie(name, { path })` with the same options used to set it.
 - **Rate limit** (`@fastify/rate-limit`): register with `{ global: false }`, then on a route add `config: { rateLimit: { max, timeWindow, keyGenerator } }`.
 - **Security headers** (`@fastify/helmet`): the defaults include `default-src 'self'` and `script-src 'self'`, but not `worker-src` or `manifest-src`. Set `contentSecurityPolicy.directives` and add both as `'self'`, then test the response header, because the merge with defaults is not documented.
+- **Static files, in detail:** `root` must be an absolute path. With `wildcard: false` the plugin scans the folder once at startup, so files added later aren't served. Its README documents no single-page-app fallback. Here the root not-found handler sends `index.html` only for a `GET` whose `Accept` header includes `text/html`, and JSON 404 `{ code: 'not_found', message }` otherwise, so a missing `.js` file never gets HTML.
+- **Starting:** `await app.listen({ port, host })`. Use host `0.0.0.0` in production, where the container needs every interface, and `127.0.0.1` on a laptop.
 
 Sources: fastify.dev Migration Guide V5, Testing guide, Hooks, Server reference, Logging; READMEs of `@fastify/static`, `@fastify/cookie`, `@fastify/rate-limit`, `@fastify/helmet`.
 
@@ -78,6 +118,23 @@ app.withTypeProvider<ZodTypeProvider>().route({
 Use one type provider package only. `@fastify/type-provider-zod` has the same API but only one release so far.
 
 Source: github.com/fastify/fastify-type-provider-zod README.
+
+## Zod 4 (server settings)
+
+```ts
+import { z } from 'zod'
+const EnvSchema = z.object({
+  DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
+  PORT: z.coerce.number().int().min(1).max(65535),
+  NODE_ENV: z.enum(['development', 'test', 'production']),
+})
+const result = EnvSchema.safeParse(process.env)   // result.success, result.data, result.error.issues
+```
+
+- `z.url()` checks only that `URL` can parse the value. `protocol` limits the scheme.
+- Each issue has `path` and `message`. `server/src/config.ts` turns them into one message that names every missing value, and `server.ts` prints it and exits with code 1.
+
+Sources: zod.dev API, Basics, Error formatting.
 
 ## Drizzle ORM with PostgreSQL
 
@@ -198,6 +255,9 @@ const router = createBrowserRouter([
 
 - `react-router-dom` no longer exists in version 8.
 - Create the app with `npm create vite@latest app -- --template react-ts`, and add `@vitejs/plugin-react`.
+- `@vitejs/plugin-react` 6 needs Vite 8 and transforms with Oxc, not Babel.
+- Dev server: `server: { port: 5180, strictPort: true, proxy: { '/api': 'http://127.0.0.1:3000' } }`. With `strictPort`, Vite stops instead of moving to another port when 5180 is taken.
+- Tests render routes with a memory router: `createMemoryRouter(routes, { initialEntries: ['/'] })` from `react-router`, passed to `RouterProvider` from `react-router/dom`. `app/src/router.tsx` exports `routes`, and `main.tsx` passes them to `createBrowserRouter`.
 
 Sources: reactrouter.com createBrowserRouter and the v7-to-v8 upgrade guide; vite.dev guide.
 
@@ -270,6 +330,10 @@ Sources: webkit.org blog posts 10218 and 14403; caniuse "background-sync"; MDN "
 - Fake time: `vi.useFakeTimers()`, `vi.setSystemTime(date)`, `vi.advanceTimersByTime(ms)` or `advanceTimersByTimeAsync(ms)`, then `vi.useRealTimers()`.
 - Coverage: `test.coverage.provider: 'v8'`.
 - User actions: `const user = userEvent.setup()` once per test, then `await user.click(...)`.
+- Projects in `vitest.config.ts`: `{ extends: './app/vite.config.ts', test: { name: 'app', root: './app', environment: 'jsdom', setupFiles: ['./src/test/setup.ts'] } }`. `include` and `setupFiles` resolve against the project's `root`. In Vitest 5 inline projects inherit the root config by default.
+- Run chosen projects with a repeated flag: `vitest run --project shared --project app`.
+- Without `globals: true`, React Testing Library can't clean up after each test by itself. The setup file calls `cleanup()` in `afterEach`.
+- `jest-dom` 7 needs `@testing-library/dom` installed.
 
 Sources: vitest.dev projects, vi API, environment, coverage; testing-library.com user-event; jest-dom README.
 
@@ -312,12 +376,18 @@ export default defineConfig({
 - Downloads: `const dl = page.waitForEvent('download')`, click, then `await (await dl).saveAs(path)`.
 - Accessibility: `const results = await new AxeBuilder({ page }).analyze()`, with `AxeBuilder` imported as the default export of `@axe-core/playwright`; check `results.violations`.
 - CI: `npx playwright install --with-deps`. Don't cache browsers. Sharding uses `--shard=1/2` with blob reports merged by `npx playwright merge-reports`.
+- `webServer` also takes `cwd` (default: the config's folder), `env` (added to the inherited environment) and `timeout` (default 60 seconds). `url` must answer 2xx, 3xx or 400–403.
+- The HTML report goes beside the nearest `package.json` at or above the config, so here it is `e2e/playwright-report/`. CI uploads that folder.
 
 Sources: playwright.dev test-projects, auth, clock, emulation, downloads, test-webserver, accessibility-testing, ci, test-sharding; the device descriptor list.
 
 ## Biome
 
 `npx @biomejs/biome init` creates `biome.json`. Locally, `biome check --write .` fixes files. CI runs `biome ci .`, which never changes files.
+
+- Rules: `"linter": { "rules": { "preset": "recommended" } }`. The older `"recommended": true` is deprecated.
+- Files: `"files": { "includes": ["**", "!server/drizzle", "!!**/dist"] }`. List `"**"` first. `!` skips formatting and linting; `!!` also keeps Biome's scanner out, which the docs advise for build output.
+- `"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true }` also skips everything in `.gitignore`.
 
 Source: biomejs.dev getting started and CLI reference.
 
@@ -326,6 +396,8 @@ Source: biomejs.dev getting started and CLI reference.
 - `actions/setup-node@v7` with `cache: npm`. The single root `package-lock.json` is found automatically.
 - `services.postgres` with `image: postgres:16`, `POSTGRES_PASSWORD` (and `POSTGRES_USER`/`POSTGRES_DB` when the app expects other names), health options `--health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5`, and ports `5432:5432`.
 - `actions/upload-artifact@v7`. Artifact names must be unique within a run, so include the shard number.
+- `actions/checkout@v7`. It refuses to check out a fork's pull request code under `pull_request_target` or `workflow_run`; this workflow uses neither.
+- Upload the Playwright report with `if: ${{ !cancelled() }}`, so it is kept when tests fail.
 
 Sources: github.com/actions/setup-node and upload-artifact releases; docs.github.com "Creating PostgreSQL service containers".
 
@@ -378,3 +450,5 @@ Phase 6 turns each line into a search or review check.
 | `Clear-Site-Data` at logout | Removes the installed app's offline files |
 | Legacy DigitalOcean size slugs such as `basic-xxs` | Only valid for apps made before May 2024 |
 | `ResponsiveContainer` in jsdom tests | Draws at zero size |
+| Running `.ts` files with Node in production | Type stripping is a release candidate in Node 22 |
+| `"recommended": true` in `biome.json` | Deprecated: use `"preset": "recommended"` |
