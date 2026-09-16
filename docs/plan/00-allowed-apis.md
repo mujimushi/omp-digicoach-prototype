@@ -100,6 +100,7 @@ export function buildApp(opts = {}) {
 - **Security headers** (`@fastify/helmet`): the defaults include `default-src 'self'` and `script-src 'self'`, but not `worker-src` or `manifest-src`. Set `contentSecurityPolicy.directives` and add both as `'self'`, then test the response header, because the merge with defaults is not documented.
 - **Static files, in detail:** `root` must be an absolute path. With `wildcard: false` the plugin scans the folder once at startup, so files added later aren't served. Its README documents no single-page-app fallback. Here the root not-found handler sends `index.html` only for a `GET` whose `Accept` header includes `text/html`, and JSON 404 `{ code: 'not_found', message }` otherwise, so a missing `.js` file never gets HTML.
 - **Starting:** `await app.listen({ port, host })`. Use host `0.0.0.0` in production, where the container needs every interface, and `127.0.0.1` on a laptop.
+- **Client address behind a proxy:** with `trustProxy: true`, `request.ip` is the left-most `X-Forwarded-For` address, which a client can set. The per-IP login limit uses it. Phase 7 checks what App Platform's router sends and, if a client can choose that address, trusts only the router's hop. (Found in the phase 6 review.)
 
 Sources: fastify.dev Migration Guide V5, Testing guide, Hooks, Server reference, Logging; READMEs of `@fastify/static`, `@fastify/cookie`, `@fastify/rate-limit`, `@fastify/helmet`.
 
@@ -224,6 +225,7 @@ These settings are OWASP's recommended Argon2id row. When the username doesn't e
 - The token is 32 random bytes from `crypto.randomBytes`, base64url-encoded. The database stores only its SHA-256.
 - In production the cookie is named `__Host-omp_session`, with `Secure`, `HttpOnly`, `SameSite=Strict` and `Path=/`, and no `Domain`. In development and tests over plain http, it is named `omp_session` without `Secure`. The server refuses to start in production with the insecure settings.
 - Issue a new token at login and at password change. Delete the server-side row at logout, at password reset and when a user is switched off.
+- Switching a user off marks their login rows with `ended_reason = 'switched_off'` instead of deleting them. The next request with that token gets 401 with the reason and deletes the row, so the phone can tell the doctor why. Logout and password reset still delete rows at once. (Phase 4D.)
 - A doctor's login lasts 30 days from last use, and at most 90 days. An admin's lasts 30 minutes from last use, and at most 8 hours.
 
 **Cross-site request forgery** (OWASP CSRF Prevention, custom request headers):
@@ -238,6 +240,7 @@ These settings are OWASP's recommended Argon2id row. When the username doesn't e
 - After 5 failures, each further failure locks that username for a delay that starts at 1 second and doubles, up to 15 minutes. A successful login or an admin password reset clears it.
 - Also a per-IP limit on the login route with `@fastify/rate-limit`: 20 attempts per 15 minutes.
 - Every failure returns the same `invalid_credentials` message.
+- A username locked by these delays gets 429 `too_many_attempts`, as `api.md` lists. A wrong password and an unknown username both get `invalid_credentials`. (Phase 3.)
 
 **Phone data:** the login token is never readable by JavaScript and is never stored in IndexedDB. Phone data is cleared at logout by deleting the Dexie database (phase 4C). Don't send `Clear-Site-Data`: it would also remove the installed app's offline files.
 
