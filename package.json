@@ -14,7 +14,7 @@
   "scripts": {
     "dev": "concurrently --names server,app --kill-others-on-fail \"npm run dev -w server\" \"npm run dev -w app\"",
     "build": "npm run build -w shared && npm run build -w app && npm run build -w server",
-    "check": "npm run typecheck && npm run lint && npm run test:unit && npm run test:server",
+    "check": "npm run typecheck && npm run lint && npm run check:anti-patterns && npm run test:unit && npm run test:server",
     "typecheck": "npm run typecheck --workspaces --if-present && tsc -p scripts",
     "lint": "biome ci .",
     "format": "biome check --write .",
@@ -27,6 +27,7 @@
     "db:seed": "npm run db:seed -w server",
     "db:reset-test": "npm run db:reset-test -w server",
     "start:test": "if [ -z \"$SKIP_BUILD\" ]; then NODE_ENV=production npm run build; fi && npm run db:reset-test && npm run start -w server",
+    "check:anti-patterns": "bash scripts/check-anti-patterns.sh",
     "check:bundle": "node scripts/check-bundle.ts app/dist",
     "check:migrations": "node scripts/check-migrations.ts"
   },
