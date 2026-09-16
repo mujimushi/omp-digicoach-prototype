@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test';
 import { createAdminWithCli } from '../support/cli.ts';
+import { expect, test } from '../support/fixtures.ts';
 
 test('a new admin logs in with the temporary password, changes it, and logs out', async ({
   page,

@@ -20,4 +20,13 @@ export const TEST_SERVER_ENV = {
   DATABASE_URL: E2E_DATABASE_URL,
   // Every test logs in from the same address; the real limit is tested in server tests.
   LOGIN_RATE_LIMIT_MAX: '100000',
+  // Playwright itself reads @omp/shared's source; the server runs its build.
+  NODE_OPTIONS: '',
 };
+
+/** Where the setup project saves each known user's login. */
+export const STORAGE_STATE = {
+  admin: 'playwright/.auth/admin.json',
+  doctor: 'playwright/.auth/doctor.json',
+  secondDoctor: 'playwright/.auth/second-doctor.json',
+} as const;

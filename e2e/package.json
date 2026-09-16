@@ -4,10 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "playwright test",
+    "test": "NODE_OPTIONS=--conditions=development playwright test",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@playwright/test": "1.63.0"
+    "@axe-core/playwright": "4.13.0",
+    "@omp/shared": "0.0.0",
+    "@playwright/test": "1.63.0",
+    "@types/pg": "8.23.1",
+    "pg": "8.23.0"
   }
 }
