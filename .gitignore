@@ -2,7 +2,12 @@ node_modules/
 dist/
 .env
 .env.*
+!.env.example
 *.log
 .DS_Store
 .vscode/
 .playwright-mcp/
+playwright-report/
+test-results/
+blob-report/
+coverage/

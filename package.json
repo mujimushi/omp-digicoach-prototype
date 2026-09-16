@@ -1,0 +1,37 @@
+{
+  "name": "omp-digicoach",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "workspaces": [
+    "app",
+    "server",
+    "shared",
+    "e2e"
+  ],
+  "scripts": {
+    "dev": "concurrently --names server,app --kill-others-on-fail \"npm run dev -w server\" \"npm run dev -w app\"",
+    "build": "npm run build -w shared && npm run build -w app && npm run build -w server",
+    "check": "npm run typecheck && npm run lint && npm run test:unit && npm run test:server",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "biome ci .",
+    "format": "biome check --write .",
+    "test:unit": "vitest run --project shared --project app",
+    "test:server": "vitest run --project server",
+    "test:e2e": "npm run test -w e2e",
+    "db:up": "docker compose up --wait",
+    "db:down": "docker compose down",
+    "db:migrate": "npm run db:migrate -w server",
+    "db:seed": "npm run db:seed -w server",
+    "db:reset-test": "npm run db:reset-test -w server"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14",
+    "@types/node": "22.20.3",
+    "concurrently": "10.0.5",
+    "typescript": "6.0.3",
+    "vitest": "5.0.1"
+  }
+}
