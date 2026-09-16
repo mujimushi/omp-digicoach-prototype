@@ -52,7 +52,9 @@ export default defineConfig({
     port: 5180,
     strictPort: true,
     proxy: {
-      '/api': 'http://127.0.0.1:3000',
+      // The object form keeps the browser's Host header. The string form sets changeOrigin, and
+      // the server's change-request guard then refuses every POST, because Origin and Host differ.
+      '/api': { target: 'http://127.0.0.1:3000', changeOrigin: false },
     },
   },
 });
