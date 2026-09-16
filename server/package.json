@@ -1,0 +1,20 @@
+{
+  "name": "@omp/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=.env --conditions=development src/server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "echo 'db:migrate: no migrations until phase 2 (Contracts)' && exit 1",
+    "db:seed": "echo 'db:seed: no seed data until phase 2 (Contracts)' && exit 1",
+    "db:reset-test": "echo 'db:reset-test: no tables until phase 2 (Contracts)' && exit 1"
+  },
+  "dependencies": {
+    "@fastify/static": "10.1.3",
+    "fastify": "5.12.5",
+    "zod": "4.6.5"
+  }
+}
