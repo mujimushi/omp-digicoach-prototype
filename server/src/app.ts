@@ -4,6 +4,7 @@ import fastifyRateLimit from '@fastify/rate-limit';
 import fastifyStatic from '@fastify/static';
 import Fastify, {
   type FastifyInstance,
+  type FastifyRequest,
   type FastifyServerOptions,
   type RouteOptions,
 } from 'fastify';
@@ -42,12 +43,28 @@ export const LOG_REDACT = [
   'res.headers["set-cookie"]',
 ];
 
+/**
+ * Request logs keep the path but drop the query string, where a student search would put a name.
+ * Bodies are never logged.
+ */
+export const LOG_SERIALIZERS = {
+  req: (request: FastifyRequest) => ({
+    method: request.method,
+    url: request.url.split('?')[0] ?? request.url,
+    remoteAddress: request.ip,
+  }),
+};
+
 export async function buildApp(
   options: BuildAppOptions,
 ): Promise<FastifyInstance> {
   const { config, db } = options;
   const app = Fastify({
-    logger: options.logger ?? { level: 'info', redact: LOG_REDACT },
+    logger: options.logger ?? {
+      level: 'info',
+      redact: LOG_REDACT,
+      serializers: LOG_SERIALIZERS,
+    },
     trustProxy: config.trustProxy,
   });
 

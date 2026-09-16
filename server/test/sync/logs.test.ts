@@ -1,6 +1,7 @@
 import { Writable } from 'node:stream';
 import { createFixtures } from '@omp/shared/fixtures';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { LOG_REDACT, LOG_SERIALIZERS } from '../../src/app.ts';
 import { buildTestApp, createUser, loginAs } from '../helpers/app.ts';
 import { resetDb, useTestDatabase } from '../helpers/db.ts';
 import { push } from '../helpers/sync.ts';
@@ -26,7 +27,14 @@ describe('push logging', () => {
         callback();
       },
     });
-    const app = await buildTestApp(db, { logger: { level: 'info', stream } });
+    const app = await buildTestApp(db, {
+      logger: {
+        level: 'info',
+        stream,
+        redact: LOG_REDACT,
+        serializers: LOG_SERIALIZERS,
+      },
+    });
     close = () => app.close();
 
     const doctor = await createUser(db);
@@ -53,5 +61,15 @@ describe('push logging', () => {
     expect(log).toContain('"type":"student.upsert"');
     expect(log).toContain('"status":"applied"');
     expect(log).not.toContain(cookies.omp_session);
+
+    lines.length = 0;
+    await app.inject({
+      method: 'GET',
+      url: `/api/sync/pull?cursor=${encodeURIComponent('abc Student Name')}`,
+      cookies,
+    });
+    const pullLog = lines.join('');
+    expect(pullLog).toContain('"url":"/api/sync/pull"');
+    expect(pullLog).not.toContain('Student');
   });
 });
