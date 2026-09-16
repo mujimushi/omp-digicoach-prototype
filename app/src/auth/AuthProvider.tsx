@@ -34,7 +34,8 @@ export type AuthContextValue = {
   refresh: () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+/** Exported for tests, which provide a user without the server. */
+export const AuthContext = createContext<AuthContextValue | null>(null);
 
 /** Where a user belongs after logging in. */
 export function homeFor(user: PublicUser): string {
