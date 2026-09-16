@@ -20,7 +20,7 @@
     "format": "biome check --write .",
     "test:unit": "vitest run --project shared --project app --project scripts",
     "test:server": "vitest run --project server",
-    "test:e2e": "npm run test -w e2e",
+    "test:e2e": "npm run test -w e2e --",
     "db:up": "docker compose up --wait",
     "db:down": "docker compose down",
     "db:migrate": "npm run db:migrate -w server",

@@ -389,7 +389,7 @@ Execution Time: 7.379 ms
 - **The migration check takes `--base <ref>`** for runs before the first `release-*` tag.
 - **The e2e job reuses the `build` job's `app/dist`** (`SKIP_BUILD=1 npm run start:test`) instead of building again in each shard.
 - **Branch protection** isn't set: it's a repository setting, left for Sadia.
-- **The `e2e-report` job failed once on the scratch run** because `download-artifact` got a cut-off blob zip (`digest-mismatch`). The same job passed on the `build-v1` run. That failure came from GitHub's artifact storage, not the repository.
+- **The root `test:e2e` script ends with `--`**, so `npm run test:e2e -- --shard=1/2` reaches Playwright. Without it npm took `--shard` as its own option: both CI shards ran all 103 tests and wrote the same `report.zip`, and `e2e-report` failed on a half-written file in two runs out of three.
 
 ## Versions
 
