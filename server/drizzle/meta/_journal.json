@@ -15,6 +15,13 @@
       "when": 1789591900707,
       "tag": "0001_change_counter_row",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789597667367,
+      "tag": "0002_login_session_ended_reason",
+      "breakpoints": true
     }
   ]
 }
