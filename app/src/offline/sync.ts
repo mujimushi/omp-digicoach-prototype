@@ -52,6 +52,15 @@ function studentIdOf(item: OutboxItem): string | undefined {
   return (item.payload as { id?: string }).id;
 }
 
+/** The tables a student ID change touches. A caller's transaction must include them all. */
+const REMAP_TABLES = (db: PhoneDb) => [
+  db.students,
+  db.studentAliases,
+  db.sessions,
+  db.drafts,
+  db.outbox,
+];
+
 /** Replaces a student ID made on this phone with the server's ID, everywhere, in one transaction. */
 export async function remapStudentId(
   db: PhoneDb,
@@ -59,39 +68,35 @@ export async function remapStudentId(
   newId: string,
 ): Promise<void> {
   if (oldId === newId) return;
-  await db.transaction(
-    'rw',
-    [db.students, db.studentAliases, db.sessions, db.drafts, db.outbox],
-    async () => {
-      const old = await db.students.get(oldId);
-      if (old) {
-        await db.students.delete(oldId);
-        if (!(await db.students.get(newId)))
-          await db.students.put({ ...old, id: newId });
-      }
-      await db.studentAliases.put({ aliasId: oldId, studentId: newId });
-      await db.sessions
-        .where('studentId')
-        .equals(oldId)
-        .modify({ studentId: newId });
+  await db.transaction('rw', REMAP_TABLES(db), async () => {
+    const old = await db.students.get(oldId);
+    if (old) {
+      await db.students.delete(oldId);
+      if (!(await db.students.get(newId)))
+        await db.students.put({ ...old, id: newId });
+    }
+    await db.studentAliases.put({ aliasId: oldId, studentId: newId });
+    await db.sessions
+      .where('studentId')
+      .equals(oldId)
+      .modify({ studentId: newId });
 
-      const draft = await db.drafts.get('current');
-      if (draft?.draft.studentId === oldId) {
-        const updated: SessionDraft = { ...draft.draft, studentId: newId };
-        await db.drafts.put({ key: 'current', draft: updated });
-      }
+    const draft = await db.drafts.get('current');
+    if (draft?.draft.studentId === oldId) {
+      const updated: SessionDraft = { ...draft.draft, studentId: newId };
+      await db.drafts.put({ key: 'current', draft: updated });
+    }
 
-      await db.outbox.toCollection().modify((item) => {
-        const payload = item.payload as { id?: string; studentId?: string };
-        if (item.type === 'student.upsert' && payload.id === oldId) {
-          item.payload = { ...payload, id: newId };
-        }
-        if (item.type === 'session.create' && payload.studentId === oldId) {
-          item.payload = { ...payload, studentId: newId };
-        }
-      });
-    },
-  );
+    await db.outbox.toCollection().modify((item) => {
+      const payload = item.payload as { id?: string; studentId?: string };
+      if (item.type === 'student.upsert' && payload.id === oldId) {
+        item.payload = { ...payload, id: newId };
+      }
+      if (item.type === 'session.create' && payload.studentId === oldId) {
+        item.payload = { ...payload, studentId: newId };
+      }
+    });
+  });
 }
 
 async function applyResults(
@@ -107,11 +112,18 @@ async function applyResults(
     const seq = item.seq;
 
     if (result.status === 'applied' || result.status === 'duplicate') {
-      await db.outbox.delete(seq);
-      const oldId = studentIdOf(item);
-      if (oldId && result.mappedStudentId && result.mappedStudentId !== oldId) {
-        await remapStudentId(db, oldId, result.mappedStudentId);
-      }
+      // One transaction, so the item never leaves the outbox without its new student ID in place.
+      await db.transaction('rw', REMAP_TABLES(db), async () => {
+        await db.outbox.delete(seq);
+        const oldId = studentIdOf(item);
+        if (
+          oldId &&
+          result.mappedStudentId &&
+          result.mappedStudentId !== oldId
+        ) {
+          await remapStudentId(db, oldId, result.mappedStudentId);
+        }
+      });
     } else if (result.code === 'unknown_student') {
       await db.outbox.update(seq, { attempts: item.attempts + 1 });
     } else {
@@ -152,9 +164,11 @@ async function mergePull(
   now: Date,
 ): Promise<boolean> {
   const pending = await pendingIds(db);
+  // The cursor is saved in the same transaction as the aliases' remapping: if the app closes
+  // part way, the next pull brings the aliases again.
   await db.transaction(
     'rw',
-    [db.students, db.studentAliases, db.sessions, db.pearls, db.meta],
+    [...REMAP_TABLES(db), db.pearls, db.meta],
     async () => {
       await db.students.bulkPut(
         pulled.students.filter((s) => !pending.students.has(s.id)),
@@ -166,19 +180,19 @@ async function mergePull(
         if (pearl.deleted) await db.pearls.delete(pearl.id);
         else await db.pearls.put(pearl);
       }
+      // A student this phone added under another ID is now known by the server's ID.
+      for (const alias of pulled.studentAliases) {
+        if (
+          (await db.students.get(alias.aliasId)) ||
+          (await db.sessions.where('studentId').equals(alias.aliasId).count())
+        ) {
+          await remapStudentId(db, alias.aliasId, alias.studentId);
+        }
+      }
       await db.setMeta('pullCursor', pulled.cursor);
       await db.setMeta('lastSyncAt', now.toISOString());
     },
   );
-  // A student this phone added under another ID is now known by the server's ID.
-  for (const alias of pulled.studentAliases) {
-    if (
-      (await db.students.get(alias.aliasId)) ||
-      (await db.sessions.where('studentId').equals(alias.aliasId).count())
-    ) {
-      await remapStudentId(db, alias.aliasId, alias.studentId);
-    }
-  }
   return (
     pulled.students.length +
       pulled.studentAliases.length +

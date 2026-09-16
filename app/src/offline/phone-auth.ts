@@ -38,16 +38,19 @@ export async function rememberUser(
   user: PublicUser,
   db: PhoneDb = getPhoneDb(),
 ): Promise<void> {
-  const previousId = await db.getMeta('userId');
-  if (previousId !== undefined && previousId !== user.id) {
-    const waiting = await db.outbox.count();
-    const previous = await cachedUser(db);
-    if (waiting > 0 && previous)
-      throw new LoginBlockedError(blockedMessage(previous, waiting));
-    await db.clearAll();
-  }
-  await db.setMeta('userId', user.id);
-  await db.setMeta('user', user);
+  // One transaction: the check, the clearing and the new user are saved together or not at all.
+  await db.transaction('rw', db.tables, async () => {
+    const previousId = await db.getMeta('userId');
+    if (previousId !== undefined && previousId !== user.id) {
+      const waiting = await db.outbox.count();
+      const previous = await cachedUser(db);
+      if (waiting > 0 && previous)
+        throw new LoginBlockedError(blockedMessage(previous, waiting));
+      await db.clearAll();
+    }
+    await db.setMeta('userId', user.id);
+    await db.setMeta('user', user);
+  });
 }
 
 /** Everything on the phone goes: records, waiting items, the draft and the cached user. */

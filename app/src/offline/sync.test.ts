@@ -171,6 +171,41 @@ describe('sync engine: push', () => {
     });
   });
 
+  it('removes a sent item only together with its student ID change', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const existingId = fixtures.uuid();
+    const { api } = fakeApi((items) =>
+      items.map((item) => ({
+        opId: item.opId,
+        status: 'applied',
+        mappedStudentId: existingId,
+      })),
+    );
+    const { repository, engine, db } = await setup(api);
+    const local = fixtures.makeStudentInput({ name: 'Added Offline' });
+    await repository.saveStudent(local);
+    // The app closes part way through the change.
+    const drafts = vi
+      .spyOn(db.drafts, 'get')
+      .mockRejectedValueOnce(new Error('closed'));
+
+    await engine.syncNow();
+
+    expect(await db.outbox.count()).toBe(1);
+    expect(await db.students.get(local.id)).toMatchObject({
+      name: 'Added Offline',
+    });
+
+    drafts.mockRestore();
+    await engine.syncNow();
+
+    expect(await db.outbox.count()).toBe(0);
+    expect(await db.students.get(local.id)).toBeUndefined();
+    expect(await db.students.get(existingId)).toMatchObject({
+      name: 'Added Offline',
+    });
+  });
+
   it('keeps every item after a network error and retries after 5 s, 15 s, 60 s, then every 5 minutes', async () => {
     // IndexedDB's test double schedules with setImmediate, so only setTimeout is faked.
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
@@ -379,6 +414,43 @@ describe('sync engine: pull', () => {
     await engine.syncNow();
     expect(await db.students.get(student.id)).toMatchObject({
       name: 'Phone Name',
+    });
+  });
+
+  it('saves the cursor only together with the aliases’ student ID changes', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const student = fixtures.makeStudent({ name: 'On the Server' });
+    const localCopy = fixtures.makeStudent({ name: 'Added Here Too' });
+    const pulled: PullResponse = {
+      ...emptyPull('7'),
+      students: [student],
+      studentAliases: [{ aliasId: localCopy.id, studentId: student.id }],
+    };
+    const { engine, db } = await setup({
+      push: vi.fn(),
+      pull: vi.fn(async () => pulled),
+    });
+    await db.students.put(localCopy);
+    // The app closes part way through the change.
+    const drafts = vi
+      .spyOn(db.drafts, 'get')
+      .mockRejectedValueOnce(new Error('closed'));
+
+    await engine.syncNow();
+
+    expect(await db.getMeta('pullCursor')).toBeUndefined();
+    expect(await db.students.get(localCopy.id)).toMatchObject({
+      name: 'Added Here Too',
+    });
+
+    drafts.mockRestore();
+    await engine.syncNow();
+
+    expect(await db.getMeta('pullCursor')).toBe('7');
+    expect(await db.students.get(localCopy.id)).toBeUndefined();
+    expect(await db.studentAliases.get(localCopy.id)).toEqual({
+      aliasId: localCopy.id,
+      studentId: student.id,
     });
   });
 
