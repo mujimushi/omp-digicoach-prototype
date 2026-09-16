@@ -4,7 +4,7 @@ Branch `build-v1`, one pull request into `main` at the end. Each phase's last co
 
 ## Resume here
 
-**Next: phase 5** (`docs/plan/05-integration.md`), then 6. Phases 2, 3 and 4A to 4E are done. The optional stop after phase 2 was skipped: Sadia asked for no review stops.
+**Next: phase 6** (`docs/plan/06-verification.md`). Phases 2 to 5 are done; phase 5's person checks are listed under Needs a person. The optional stop after phase 2 was skipped: Sadia asked for no review stops.
 
 Where things are, for the next session:
 
@@ -16,7 +16,7 @@ Where things are, for the next session:
 - **App:** `useRepository()` from `app/src/data/RepositoryProvider.tsx`, whose `createAppRepository()` returns the Dexie repository (`app/src/offline/`); the memory repository is used only in tests. Screens load through `useRepositoryQuery()` (`app/src/doctor/useRepositoryQuery.ts`), which reloads when the provider's `notifyChanged()` runs; the sync engine should call it after a pull. Doctor screens are in `app/src/doctor/`, their routes in `app/src/doctor/routes.tsx`. Component tests render screens with `renderDoctorApp()` from `app/src/test/doctor-app.tsx`. `useUser()` and `useAuth()` from `app/src/auth/AuthProvider.tsx`. UI parts are in `app/src/ui/`; text colours that pass WCAG AA are `ds.txMuted`, `ds.priText`, `ds.goldText`, `ds.tealText`, `ds.greenText`, `ds.redText`.
 - **Dashboard:** server routes in `server/src/routes/admin/` (the admin check is a hook on the plugin), queries in `server/src/services/reports/` and `services/doctors/`. Screens in `app/src/admin/`, loaded through TanStack Query; `renderAdmin()` in `app/src/test/admin-app.tsx` renders a page against the MSW handlers.
 - **Offline:** `getPhoneDb()` in `app/src/offline/db.ts`; the sync engine in `sync.ts` runs inside `SyncProvider` in the doctor layout; `phone-auth.ts` keeps the last user and blocks a second user while items wait. `server/test/integration/phone-sync.test.ts` runs the engine against the real routes and has its own tsconfig with the DOM library.
-- **End-to-end:** `npm run start:test` builds, resets `omp_e2e` and starts the server in test mode. `e2e/support/fixtures.ts` gives `doctorPage`, `secondDoctorPage` and `adminPage` and resets the database before each file; `e2e/support/helpers/` holds `db.ts`, `axe.ts`, `layout.ts` and `doctor.ts`. Run with `npm run test:e2e`, which sets `NODE_OPTIONS=--conditions=development` so Playwright reads `@omp/shared` source.
+- **End-to-end:** `npm run start:test` builds, resets `omp_e2e` and starts the server in test mode. `e2e/support/fixtures.ts` gives `doctorPage`, `secondDoctorPage` and `adminPage`, `contextFor()` for more phones, and resets the database before each file; `e2e/support/helpers/` holds `db.ts`, `axe.ts`, `layout.ts`, `doctor.ts`, `admin.ts` and `people.ts` (`adminAtDesk`, `emptyPhone`). The joined suite is `e2e/tests/integration/01…17`. `expectAllSent()` waits for the phone's outbox to empty; call it after the saved message shows. Run with `npm run test:e2e`, which sets `NODE_OPTIONS=--conditions=development` so Playwright reads `@omp/shared` source.
 - **This Mac:** start every shell command with `eval "$(fnm env)" && fnm use 22`. PostgreSQL on 5434 (`npm run db:up`), server on 3000, Vite on 5180. Run `npx biome check --write .` before committing.
 - **Git:** commits authored by Sadia with no Co-Authored-By line; push only `build-v1` and tags to `origin`.
 
@@ -30,7 +30,7 @@ Where things are, for the next session:
 | 4C Offline and sync | Done | `phase-4c-v1` |
 | 4D Admin dashboard | Done | `phase-4d-v1` |
 | 4E Quality and deploy prep | Done | `phase-4e-v1` |
-| 5 Integration and hardening | Not started | |
+| 5 Integration and hardening | Done, except the person checks | `rc-1` |
 | 6 Verification gate | Not started | |
 
 ## Phase 2: Contracts
@@ -366,7 +366,7 @@ Execution Time: 7.379 ms
 
 ### Checklist
 
-- [x] CI shows the `static`, `unit`, `server`, `build`, `e2e (1)`, `e2e (2)` and `e2e-report` jobs, all green on push run [35158747757](https://github.com/sadiash/omp-digicoach/actions/runs/35158747757), with the merged HTML report uploaded as `playwright-report`. The one pull request opens at the end of phase 6 and shows the same checks.
+- [x] CI shows the `static`, `unit`, `server`, `build`, `e2e (1)`, `e2e (2)` and `e2e-report` jobs, all green on push run [35160542675](https://github.com/sadiash/omp-digicoach/actions/runs/35160542675) at `phase-4e-v1`, each shard running 40 tests, with the merged HTML report uploaded as `playwright-report`. The one pull request opens at the end of phase 6 and shows the same checks.
 - [x] A failing unit test pushed on `scratch/red-check` turned run [35158778826](https://github.com/sadiash/omp-digicoach/actions/runs/35158778826) red at `unit`. The branch is deleted.
 - [ ] The nightly workflow has run green once, started by hand. **Needs a person.** GitHub only starts `workflow_dispatch` and schedules from a workflow file on `main`, so this waits for the merge.
 - [x] The budget and mock-code checks fail on a small fake `dist` in `scripts/check-bundle.test.ts` (over budget, `msw` present, `memory-repository` present, admin chunk loaded by the entry) and pass on the real build: doctor entry 185.9 KB gzipped.
@@ -391,6 +391,84 @@ Execution Time: 7.379 ms
 - **Branch protection** isn't set: it's a repository setting, left for Sadia.
 - **The root `test:e2e` script ends with `--`**, so `npm run test:e2e -- --shard=1/2` reaches Playwright. Without it npm took `--shard` as its own option: both CI shards ran all 103 tests and wrote the same `report.zip`, and `e2e-report` failed on a half-written file in two runs out of three.
 
+## Phase 5: Integration and hardening
+
+### Checklist
+
+- [x] E2E-01 to E2E-17 pass locally on every project: 62 passed, 41 skipped by project, 0 failed, 0 flaky, in 3.9 minutes. CI run and counts for `rc-1` are in the pull request.
+- [ ] The nightly run is green two nights in a row. **Needs a person:** the nightly workflow only runs from `main`.
+- [x] The log search finds no secrets or student names (below).
+- [x] Every automated speed target is met: doctor entry 185.9 KB gzipped (budget 250 KB), dashboard pages at 10 times the seed data within 301 ms. The phone opening in under 3 seconds on a mid-range Android phone is a person check.
+- [ ] The real-phone table is complete, with every cell passing. **Needs a person.**
+- [ ] Every `before-launch` issue from the bug bash is fixed. **Needs a person:** the bug bash needs two people.
+
+| ID | Spec | Projects it runs on |
+|---|---|---|
+| E2E-01 | `01-new-doctor` | desktop, both phones |
+| E2E-02 | `02-session-seen-by-admin` | both phones, with the admin in a desktop context in the same test |
+| E2E-03 | `03-extra-time` | both phones |
+| E2E-04 | `04-pause` | both phones |
+| E2E-05 | `05-draft` | both phones |
+| E2E-06 | `06-offline` | phone Chromium |
+| E2E-07 | `07-resend` | phone Chromium |
+| E2E-08 | `08-privacy` | both phones |
+| E2E-09 | `09-admin-blocked` | phone Chromium, desktop |
+| E2E-10 | `10-switched-off-sync` | phone Chromium, desktop |
+| E2E-11 | `11-reset-password` | desktop, phone Chromium |
+| E2E-12 | `12-pearl` | both phones |
+| E2E-13 | `13-same-pmdc` | phone Chromium, two contexts |
+| E2E-14 | `14-layout` | both phones, at 320, 360, 390, 412 and 430 px |
+| E2E-15 | `15-report-and-csv` | desktop |
+| E2E-16 | `16-accessibility` | doctor screens on both phones, dashboard screens on desktop |
+| E2E-17 | `17-logout` | phone Chromium |
+
+### Mocks removed
+
+- `createAppRepository()` returns the Dexie repository in every build; `memory-repository` is imported only by tests and the contract suite.
+- `msw` is imported only in `app/src/mocks/` and tests. `npm run check:bundle` finds neither in `app/dist`.
+- End-to-end tests run against the server serving the production build (`NODE_ENV=production npm run build`) on `omp_e2e`.
+
+### Hardening
+
+- **Permissions:** `server/test/permissions.test.ts` checks that the registered routes are exactly the 20 in `api.md`, that every route needing a login answers 401 without one, that the sync routes answer 403 to an admin who isn't a doctor, and that admin routes answer 403 to a doctor. `server/test/admin/permissions.test.ts` still checks each admin route in full.
+- **Cookie and headers** on the production build (`NODE_ENV=production`, `node dist/server.js`) behind a local TLS proxy:
+  - `Set-Cookie: __Host-omp_session=…; Max-Age=7776000; Path=/; HttpOnly; Secure; SameSite=Strict`, with no `Domain`.
+  - `Strict-Transport-Security: max-age=31536000; includeSubDomains`, `Content-Security-Policy` with `default-src 'self'`, `script-src 'self'`, `object-src 'none'`, `frame-ancestors 'self'`, `worker-src 'self'`, `manifest-src 'self'` and `upgrade-insecure-requests`, plus `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `X-Frame-Options: SAMEORIGIN` and `Cross-Origin-Opener-Policy: same-origin`.
+  - A logout with a foreign `Origin` answers 403.
+- **`npm audit --omit=dev`:** 0 vulnerabilities. The full audit has 4 moderate findings, all the old `esbuild` inside `drizzle-kit`'s `@esbuild-kit` packages (GHSA-67mh-4wv8-2f99, esbuild's development server). drizzle-kit is a development tool and doesn't start that server. No high findings.
+- **Logs:** a full end-to-end run with the server's output saved: 3,663 lines, 1,783 requests. A search for the 18 student names in the tests and fixtures, the 115 first and last names the fixtures use, the known PMDC numbers, 14 passwords and phrases typed in tests, temporary-password patterns, cookie values, 43-character tokens, Argon2 hashes and query strings found one line: the startup line naming the cookie, `"cookie":"omp_session"`, with no value. Request logs now keep only method, path and address (`LOG_SERIALIZERS` in `server/src/app.ts`).
+
+### Speed
+
+Ten times the seed data (120 users, 600 students, 4,000 sessions) in a scratch database, the production build behind the TLS proxy, desktop Chromium, a new browser context for each load, three loads each until the heading shows and no "Loading" text remains:
+
+| Page | Loads (ms) |
+|---|---|
+| Overview | 177, 276, 272 |
+| Doctors (120 rows) | 247, 193, 251 |
+| Doctor detail | 286, 284, 285 |
+| Students (600 rows) | 287, 301, 293 |
+| Student detail | 270, 209, 206 |
+| Sessions (50 of 4,000) | 202, 207, 190 |
+| Session detail | 161, 161, 159 |
+| Student report | 215, 272, 275 |
+| Doctor report | 283, 284, 279 |
+
+### Anti-pattern checks
+
+- No skipped flaky tests. Every `test.skip` in `e2e/` picks projects by browser or device; there is no `test.fixme`, `.only` or `test.fail`.
+- Offline in emulated Chromium isn't treated as enough: the real-phone table is under Needs a person.
+- No contract changes: `git diff phase-4e-v1..HEAD` touches nothing in `shared/`, `server/src/db/schema.ts` or `app/src/data/repository.ts`.
+- No mock in the app build (above).
+
+### Choices the plan didn't make
+
+- **E2E-02 runs on both phones only**, with the admin in its own desktop context inside the test, because the doctor records on a phone.
+- **The phase 4 lane tests that the joined suite repeats moved into it:** E2E-B1 to B4, C1 to C3 and D1, D3 to D6. Each joined test names the lane test it replaces, such as `E2E-15 (E2E-D4)`. E2E-C4 (no cached API answers) and E2E-D2 (switched off on the next page load) stay in their lane files, because no joined test covers them.
+- **Logout without a login answers 204** and clears the cookie. `api.md` lists "Logged in" for the route but no error for it.
+- **`expectAllSent()` reads the phone's outbox** before checking the badge. On WebKit the badge still showed "All sent" for a moment after a save, so tests read the database before the push.
+- **`rc-1` is on `build-v1`.** `main` carries it after the pull request merges.
+
 ## Versions
 
 Every package added so far matches the major in `00-allowed-apis.md`: drizzle-orm 0.45.2, drizzle-kit 0.31.10, pg 8.23.0, @types/pg 8.23.1, @node-rs/argon2 2.2.1, msw 2.15.0, zod 4.6.5, @fastify/cookie 11.1.2, @fastify/rate-limit 11.2.0, @fastify/helmet 13.1.1, fastify-type-provider-zod 7.0.0, @testing-library/user-event 14.6.7.
@@ -409,3 +487,6 @@ Every package added so far matches the major in `00-allowed-apis.md`: drizzle-or
 - The nightly workflow's first run by hand, after the merge to `main` (phase 4E).
 - Sadia's review of the runbooks, and branch protection on `main` if the GitHub plan allows it (phase 4E).
 - Validating `.do/app.yaml` with `doctl` (phase 7).
+- The real-phone table on an iPhone and a mid-range Android phone, including the day 1 / day 9 check and opening in under 3 seconds (phase 5).
+- The one-hour bug bash with a second person, and fixing its `before-launch` issues (phase 5).
+- The nightly workflow green two nights in a row (phase 5).
