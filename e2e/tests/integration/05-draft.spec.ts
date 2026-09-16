@@ -1,5 +1,9 @@
 import { expect, test } from '../../support/fixtures.ts';
-import { nextStep, startSession } from '../../support/helpers/doctor.ts';
+import {
+  nextStep,
+  savedDraftStep,
+  startSession,
+} from '../../support/helpers/doctor.ts';
 
 test.skip(({ isMobile }) => !isMobile, 'The doctor app runs on phones');
 
@@ -34,6 +38,8 @@ test('E2E-05 an old draft asks Resume or Discard', async ({
   await startSession(page, 'Bilal Hussain');
   await nextStep(page, 2);
   await page.clock.runFor(1_000);
+  // Close only once the phone has stored the step change, as a doctor's phone would have by then.
+  await expect.poll(() => savedDraftStep(page)).toBe(2);
 
   // The doctor closes the app and opens it again 16 minutes later.
   const context = page.context();

@@ -86,6 +86,37 @@ export async function runQuickSession(
   ).toBeVisible();
 }
 
+/** The step of the session draft saved on the phone, read from IndexedDB, or null without one. */
+export async function savedDraftStep(page: Page): Promise<number | null> {
+  return page.evaluate(
+    () =>
+      new Promise<number | null>((resolve, reject) => {
+        const open = indexedDB.open('omp');
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const db = open.result;
+          if (!db.objectStoreNames.contains('drafts')) {
+            db.close();
+            resolve(null);
+            return;
+          }
+          const request = db
+            .transaction('drafts')
+            .objectStore('drafts')
+            .get('current');
+          request.onsuccess = () => {
+            db.close();
+            const record = request.result as
+              | { draft?: { timer?: { currentStep?: number } } }
+              | undefined;
+            resolve(record?.draft?.timer?.currentStep ?? null);
+          };
+          request.onerror = () => reject(request.error);
+        };
+      }),
+  );
+}
+
 /** The number of items waiting in the phone's outbox, read from IndexedDB. */
 export async function outboxCount(page: Page): Promise<number> {
   return page.evaluate(
