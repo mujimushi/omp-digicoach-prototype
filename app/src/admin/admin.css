@@ -1,0 +1,44 @@
+.admin-table th,
+.admin-table td {
+  font-variant-numeric: tabular-nums;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .admin-nav,
+  .admin-topbar,
+  .no-print,
+  button {
+    display: none !important;
+  }
+
+  .admin-layout,
+  .admin-layout main {
+    display: block !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .admin-panel {
+    border: 1px solid #ccc !important;
+    break-inside: avoid-page;
+  }
+
+  tr,
+  th,
+  td {
+    break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+}

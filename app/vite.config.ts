@@ -33,7 +33,11 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
         // The dashboard stays off phones: its chunk is never precached. The plugin adds the web
         // manifest itself; matching it here too makes Workbox refuse to install.
-        globIgnores: ['**/admin-*.js', 'manifest.webmanifest'],
+        globIgnores: [
+          '**/admin-*.js',
+          '**/admin-*.css',
+          'manifest.webmanifest',
+        ],
         navigateFallback: 'index.html',
         navigateFallbackDenylist: [/^\/api\//, /^\/admin/],
         // No runtime caching rules at all: API answers are private and never cached.
