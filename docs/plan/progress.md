@@ -4,11 +4,12 @@ Branch `build-v1`, one pull request into `main` at the end. Each phase's last co
 
 ## Resume here
 
-**Next: phase 4A, Doctor API** (`docs/plan/04a-doctor-api.md`). Phases 2 and 3 are done and tagged. The run paused after phase 3 at Sadia's request, so a new session can continue. The optional stop after phase 2 was skipped: Sadia asked for no review stops.
+**Next: phase 4B, Doctor screens** (`docs/plan/04b-doctor-screens.md`), then 4C, 4D, 5 and 6, with 4E between the phase 4 parts. Phases 2, 3 and 4A are done. The optional stop after phase 2 was skipped: Sadia asked for no review stops.
 
 Where things are, for the next session:
 
-- **Change numbers:** `nextChangeSeq(tx)` in `server/src/db/change-seq.ts`. Insert helpers for seeding and tests are in `server/src/db/records.ts`.
+- **Change numbers:** `nextChangeSeq(tx)` in `server/src/db/change-seq.ts`; call `lockChangeCounter(tx)` first in a writing transaction. Insert helpers for seeding and tests are in `server/src/db/records.ts`.
+- **Sync:** `server/src/services/sync/push.ts` and `pull.ts`; student updates with audit go through `updateStudentRecord()` in `server/src/services/students/upsert.ts`, which the admin's correction should reuse. `toStudent`, `toTeachingSession` and `toPearl` in `pull.ts` turn rows into shared shapes.
 - **Login checks:** `requireLogin`, `requireDoctor` and `requireAdmin` in `server/src/plugins/auth.ts`. `request.user` is the full user row, so convert it with `toPublicUser()` before sending. Register new route plugins inside the `/api` plugin in `server/src/app.ts`.
 - **Errors:** `sendError(reply, status, code, message)` in `server/src/plugins/errors.ts`. The error handler turns Zod failures into 400 `validation_failed`.
 - **Server test helpers** (`server/test/helpers/`): `useTestDatabase()`, `resetDb(db)`, `useTestApp(db, () => options)`, `createUser(db, overrides)`, `loginAs(app, user)`, `APP_HEADERS`. Test files run one at a time on `omp_test`.
@@ -22,7 +23,7 @@ Where things are, for the next session:
 | 1 Foundations | Done (merged earlier) | `foundations-v1` |
 | 2 Contracts | Done | `contracts-v1` |
 | 3 Login and app shell | Done | `shell-v1` |
-| 4A Doctor API | Not started | |
+| 4A Doctor API | Done | `phase-4a-v1` |
 | 4B Doctor screens | Not started | |
 | 4C Offline and sync | Not started | |
 | 4D Admin dashboard | Not started | |
@@ -108,9 +109,47 @@ Where things are, for the next session:
 - **`buildApp()` takes `extraApiRoutes`**, used only by server tests to reach `requireDoctor` and `requireAdmin` before lanes 4A and 4D add real routes.
 - **The dashboard** loads through one lazy route, `/admin/*`, whose module `app/src/admin/admin.tsx` holds nested `<Routes>`. React Router's `lazy` can't add child routes, and the file name gives the chunk its `admin-` name.
 
+- CI run on `shell-v1`: https://github.com/sadiash/omp-digicoach/actions/runs/35152066983 (green, including the meeting test on all three Playwright projects).
+
+## Phase 4A: Doctor API
+
+### Checklist
+
+- [x] `npm run test:server` passes: 130 tests. Line coverage is 100% in `server/src/services/sync/` (push, pull, results) and `server/src/services/students/`.
+- [x] `grep -rn "doctorId" shared/src/schemas/sync.ts` finds nothing.
+- [x] The `change_seq` writer search finds no writer other than `nextChangeSeq`.
+- [x] `grep -rn "db\.query\.\|defineRelations" server/src` finds nothing.
+- [x] `api.md` is unchanged since `foundations-v1`.
+- Lane 4C's sync engine against these routes: checked in phase 4C.
+
+Speed on the local database: a push of 50 sessions and a first pull of 500 students and 2,000 sessions both pass their limits (2 s and 1 s) in the tests.
+
+### Anti-pattern checks
+
+- Doctor ID from the phone: no. `session.create` uses the login; a `doctorId` field fails the strict schema (tested).
+- One transaction for the whole batch, or items out of order: no. Each item has its own transaction, in order (tested).
+- Changes read by clock time or a plain sequence: no. Pull reads `change_counter` first (late-commit test).
+- An empty `.returning()` after `onConflictDoNothing` treated as an insert: no. It loads the existing session and answers `duplicate` or `forbidden`.
+- Drizzle 1.0 release-candidate APIs or object-style table options: none.
+- Logging request bodies: no. The log test checks that no student name or PMDC number appears.
+
+### Choices the plan didn't make
+
+- **Every item transaction locks the change counter first** (`lockChangeCounter`), before touching other rows, so two pushes can't deadlock on each other's rows.
+- **A push item that collides with the same item from another request** (unique violation or deadlock) is retried once in a new transaction, which then finds the stored result.
+- **An opId recorded by another user** is refused with `forbidden` and its stored result isn't shown.
+- **`pearl.delete` and `pearl.use` of an unknown pearl answer `duplicate`**: there is nothing to change.
+- **`pearl.upsert` doesn't undelete a deleted pearl**; it changes only the diagnosis and points.
+- **`pearl.use` doesn't change `updated_at`**, so the pearl's time reflects its last edit.
+- **A student update through an alias ID** answers with `mappedStudentId` set to the real student, so a phone that missed the first mapping still learns it.
+- **The cursor is the counter value as a decimal string**; anything else, including leading zeros, is `bad_cursor`.
+- **Sessions the admin deletes stay on the doctor's phone**: pull has no way to send a deletion, and the plan adds none.
+
 ## Versions
 
 Every package added so far matches the major in `00-allowed-apis.md`: drizzle-orm 0.45.2, drizzle-kit 0.31.10, pg 8.23.0, @types/pg 8.23.1, @node-rs/argon2 2.2.1, msw 2.15.0, zod 4.6.5, @fastify/cookie 11.1.2, @fastify/rate-limit 11.2.0, @fastify/helmet 13.1.1, fastify-type-provider-zod 7.0.0, @testing-library/user-event 14.6.7.
+
+@vitest/coverage-v8 5.0.1.
 
 `lucide-react` 1.46.0 wasn't listed. Phase 3 read its documentation and added it to `00-allowed-apis.md`.
 
