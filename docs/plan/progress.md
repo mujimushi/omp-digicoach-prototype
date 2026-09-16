@@ -4,7 +4,7 @@ Branch `build-v1`, one pull request into `main` at the end. Each phase's last co
 
 ## Resume here
 
-**Next: the rest of phase 4E** (`docs/plan/04e-quality-ops.md`: CI jobs, nightly workflow, migration and bundle checks, app spec, runbooks), then 5 and 6. Phases 2, 3 and 4A to 4D are done. The optional stop after phase 2 was skipped: Sadia asked for no review stops.
+**Next: phase 5** (`docs/plan/05-integration.md`), then 6. Phases 2, 3 and 4A to 4E are done. The optional stop after phase 2 was skipped: Sadia asked for no review stops.
 
 Where things are, for the next session:
 
@@ -29,7 +29,7 @@ Where things are, for the next session:
 | 4B Doctor screens | Done | `phase-4b-v1` |
 | 4C Offline and sync | Done | `phase-4c-v1` |
 | 4D Admin dashboard | Done | `phase-4d-v1` |
-| 4E Quality and deploy prep | In progress: end-to-end support done | |
+| 4E Quality and deploy prep | Done | `phase-4e-v1` |
 | 5 Integration and hardening | Not started | |
 | 6 Verification gate | Not started | |
 
@@ -362,9 +362,34 @@ Execution Time: 7.379 ms
 - **Charts** carry a hidden table with the same numbers for screen readers.
 - **The admin's CSS** (`admin-*.css`) is also left out of the phone's precache.
 
-## Phase 4E: Quality and deploy prep (in progress)
+## Phase 4E: Quality and deploy prep
 
-Done so far: `e2e/support/` with `auth.setup.ts` (saves the admin's and two doctors' logins), `fixtures.ts` (`adminPage`, `doctorPage`, `secondDoctorPage`, database reset before each file through the command line), and `helpers/` (`layout.ts` with `expectChipsStable` and `expectTextBoxesNotClipped`, `axe.ts` with `expectNoSeriousA11yIssues`, `db.ts` with read-only queries). Playwright runs one worker, because test files reset the shared database.
+### Checklist
+
+- [x] CI shows the `static`, `unit`, `server`, `build`, `e2e (1)`, `e2e (2)` and `e2e-report` jobs, all green on push run [35158747757](https://github.com/sadiash/omp-digicoach/actions/runs/35158747757), with the merged HTML report uploaded as `playwright-report`. The one pull request opens at the end of phase 6 and shows the same checks.
+- [x] A failing unit test pushed on `scratch/red-check` turned run [35158778826](https://github.com/sadiash/omp-digicoach/actions/runs/35158778826) red at `unit`. The branch is deleted.
+- [ ] The nightly workflow has run green once, started by hand. **Needs a person.** GitHub only starts `workflow_dispatch` and schedules from a workflow file on `main`, so this waits for the merge.
+- [x] The budget and mock-code checks fail on a small fake `dist` in `scripts/check-bundle.test.ts` (over budget, `msw` present, `memory-repository` present, admin chunk loaded by the entry) and pass on the real build: doctor entry 185.9 KB gzipped.
+- [x] The migration check passed against `phase-4c-v1` (`--base phase-4c-v1`), then failed on a scratch migration dropping `students.pmdc_number`: the old server's push answered 500. The scratch migration is deleted. With no `release-*` tag yet, the default run skips and says so.
+- [ ] `.do/app.yaml` validation waits for phase 7: `doctl` isn't installed on this Mac.
+- [ ] Sadia has reviewed the runbooks. **Needs a person.**
+
+### Anti-pattern checks
+
+- Playwright browsers aren't cached; `npx playwright install --with-deps` runs in each job.
+- Blob report artifacts are named `blob-report-${{ matrix.shard }}`.
+- Actions are `checkout@v7`, `setup-node@v7`, `upload-artifact@v7` and `download-artifact@v8`, as listed.
+- Migrations run in the `migrate` PRE_DEPLOY job, not in `run_command`. The database has `production: true`. The size slug is `apps-s-1vcpu-1gb`.
+- No secrets in `.do/app.yaml` or workflows. `POSTGRES_PASSWORD: omp` is the throwaway password of the CI service container.
+- End-to-end tests reset the database only through `npm run db:reset-test -w server`.
+
+### Choices the plan didn't make
+
+- **Red CI was proven on a push run**, not a pull request, because the brief asks for one pull request at the end.
+- **The migration check takes `--base <ref>`** for runs before the first `release-*` tag.
+- **The e2e job reuses the `build` job's `app/dist`** (`SKIP_BUILD=1 npm run start:test`) instead of building again in each shard.
+- **Branch protection** isn't set: it's a repository setting, left for Sadia.
+- **The `e2e-report` job failed once on the scratch run** because `download-artifact` got a cut-off blob zip (`digest-mismatch`). The same job passed on the `build-v1` run. That failure came from GitHub's artifact storage, not the repository.
 
 ## Versions
 
@@ -381,3 +406,6 @@ Every package added so far matches the major in `00-allowed-apis.md`: drizzle-or
 - Putting the doctor screen screenshots beside the prototype's in the pull request (phase 4B).
 - Real-phone checks on an iPhone and an Android phone: install, airplane mode, a session recorded offline and sent the next day (phase 4C).
 - Attaching the printed student report PDF from E2E-D4 to the pull request (phase 4D).
+- The nightly workflow's first run by hand, after the merge to `main` (phase 4E).
+- Sadia's review of the runbooks, and branch protection on `main` if the GitHub plan allows it (phase 4E).
+- Validating `.do/app.yaml` with `doctl` (phase 7).
