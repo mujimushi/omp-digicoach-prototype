@@ -8,10 +8,18 @@
       "development": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./fixtures": {
+      "development": "./src/fixtures/index.ts",
+      "types": "./dist/fixtures/index.d.ts",
+      "default": "./dist/fixtures/index.js"
     }
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "4.6.5"
   }
 }
