@@ -9,6 +9,8 @@ export type ConfirmDialogProps = {
   confirmLabel: string;
   cancelLabel?: string;
   tone?: 'danger' | 'primary';
+  /** Escape cancels, unless cancelling does something that can't be undone. */
+  closeOnEscape?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -21,6 +23,7 @@ export function ConfirmDialog({
   confirmLabel,
   cancelLabel = 'Cancel',
   tone = 'danger',
+  closeOnEscape = true,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -33,14 +36,14 @@ export function ConfirmDialog({
     const previous = document.activeElement as HTMLElement | null;
     cancelRef.current?.focus();
     const onKey = (event: globalThis.KeyboardEvent) => {
-      if (event.key === 'Escape') onCancel();
+      if (event.key === 'Escape' && closeOnEscape) onCancel();
     };
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
       previous?.focus?.();
     };
-  }, [open, onCancel]);
+  }, [open, onCancel, closeOnEscape]);
 
   if (!open) return null;
 
