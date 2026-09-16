@@ -3,6 +3,7 @@ import { ChevronRight, Play, Plus, SquarePen } from 'lucide-react';
 import { useId, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useRepository } from '../../data/RepositoryProvider.tsx';
+import { InstallGuide } from '../../install/InstallGuide.tsx';
 import { Logo } from '../../layout/Logo.tsx';
 import { ds } from '../../styles/tokens.ts';
 import { Button } from '../../ui/Button.tsx';
@@ -188,6 +189,7 @@ export function StudentListScreen() {
           </section>
         )}
 
+        <InstallGuide />
         <label htmlFor={searchId} className="visually-hidden">
           Search students by name or PMDC number
         </label>

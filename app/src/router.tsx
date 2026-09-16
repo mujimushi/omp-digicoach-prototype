@@ -6,6 +6,7 @@ import { LoginScreen } from './auth/LoginScreen.tsx';
 import { doctorRoutes } from './doctor/routes.tsx';
 import { DoctorLayout } from './layout/DoctorLayout.tsx';
 import { NotFound } from './layout/PlaceholderPage.tsx';
+import { UpdatePrompt } from './offline/UpdatePrompt.tsx';
 import { ToastProvider } from './ui/Toast.tsx';
 
 function AppRoot() {
@@ -13,6 +14,7 @@ function AppRoot() {
     <AuthProvider>
       <ToastProvider>
         <Outlet />
+        <UpdatePrompt />
       </ToastProvider>
     </AuthProvider>
   );

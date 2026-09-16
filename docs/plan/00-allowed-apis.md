@@ -303,6 +303,8 @@ VitePWA({
 - React hook: `import { useRegisterSW } from 'virtual:pwa-register/react'` returns `{ needRefresh: [bool, set], offlineReady: [bool, set], updateServiceWorker(reloadPage?) }`. Add `/// <reference types="vite-plugin-pwa/react" />`.
 - The default `globPatterns` leaves out images, which is why the list above adds them.
 - `navigateFallbackDenylist` doesn't stop a chunk being precached; `globIgnores` does.
+- The plugin adds `manifest.webmanifest` to the precache list itself. When `globPatterns` also matches it, the two entries have different revisions and Workbox's install fails with `add-to-cache-list-conflicting-entries`, leaving nothing cached. Add `manifest.webmanifest` to `globIgnores`. (Found in phase 4C by reading the service worker's error through the Chrome DevTools Protocol.)
+- Icons: `pwaAssets: { config: true, overrideManifestIcons: true }` with a `pwa-assets.config.ts` generates the icon set at build time and adds the head links and manifest icons, so no generated PNGs are committed.
 - Add no `runtimeCaching` rule for `/api`.
 - Icons: `@vite-pwa/assets-generator` with `minimal2023Preset` and `images: ['public/logo.svg']`.
 - Keep both `apple-mobile-web-app-capable` and `mobile-web-app-capable` meta tags.
