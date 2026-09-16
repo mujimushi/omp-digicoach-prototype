@@ -85,3 +85,56 @@ export async function runQuickSession(
     page.getByRole('status').filter({ hasText: 'Session saved' }),
   ).toBeVisible();
 }
+
+/** The number of items waiting in the phone's outbox, read from IndexedDB. */
+export async function outboxCount(page: Page): Promise<number> {
+  return page.evaluate(
+    () =>
+      new Promise<number>((resolve, reject) => {
+        const open = indexedDB.open('omp');
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const db = open.result;
+          if (!db.objectStoreNames.contains('outbox')) {
+            db.close();
+            resolve(0);
+            return;
+          }
+          const request = db
+            .transaction('outbox')
+            .objectStore('outbox')
+            .count();
+          request.onsuccess = () => {
+            db.close();
+            resolve(request.result);
+          };
+          request.onerror = () => reject(request.error);
+        };
+      }),
+  );
+}
+
+/** Goes through all five steps from Step 1, rating each, then taps Finish. */
+export async function rateAllAndFinish(
+  page: Page,
+  ratings: readonly (1 | 2 | 3 | 4 | 5)[],
+): Promise<void> {
+  for (const [index, stars] of ratings.entries()) {
+    await rateStep(page, stars);
+    if (index < 4) await nextStep(page, index + 2);
+  }
+  await page.getByRole('button', { name: 'Finish' }).click();
+  await expect(page.getByRole('heading', { name: 'Quick log' })).toBeVisible();
+}
+
+/**
+ * From the student list, waits until nothing is waiting to send. Call it after the phone has stored
+ * the change: it reads the outbox itself, because the badge can still show the earlier state.
+ */
+export async function expectAllSent(
+  page: Page,
+  timeout = 15_000,
+): Promise<void> {
+  await expect.poll(() => outboxCount(page), { timeout }).toBe(0);
+  await expect(syncBadge(page)).toHaveText('All sent', { timeout });
+}

@@ -27,21 +27,27 @@ const CONTEXT_OPTIONS = [
   'serviceWorkers',
 ] as const;
 
-/** A new browser context with the project's device settings, logged in as a known user. */
-export async function contextFor(
-  browser: Browser,
-  testInfo: TestInfo,
-  who: KnownUserKey,
-): Promise<BrowserContext> {
+/** The project's device settings, for extra browser contexts in a test. */
+export function deviceOptions(testInfo: TestInfo): Record<string, unknown> {
   const use = testInfo.project.use as Record<string, unknown>;
-  const options = Object.fromEntries(
+  return Object.fromEntries(
     CONTEXT_OPTIONS.filter((key) => use[key] !== undefined).map((key) => [
       key,
       use[key],
     ]),
   );
+}
+
+/** A new browser context with the project's device settings, logged in as a known user. */
+export async function contextFor(
+  browser: Browser,
+  testInfo: TestInfo,
+  who: KnownUserKey,
+  extra: Record<string, unknown> = {},
+): Promise<BrowserContext> {
   const context = await browser.newContext({
-    ...options,
+    ...deviceOptions(testInfo),
+    ...extra,
     storageState: STORAGE_STATE[who],
   });
   // If the saved login has gone, for example after a password reset in an earlier test, log in again.
