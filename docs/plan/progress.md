@@ -4,7 +4,7 @@ Branch `build-v1`, one pull request into `main` at the end. Each phase's last co
 
 ## Resume here
 
-**Next: phase 4B, Doctor screens** (`docs/plan/04b-doctor-screens.md`), then 4C, 4D, 5 and 6, with 4E between the phase 4 parts. Phases 2, 3 and 4A are done. The optional stop after phase 2 was skipped: Sadia asked for no review stops.
+**Next: phase 4C, Offline and sync** (`docs/plan/04c-offline-sync.md`), then 4D, the rest of 4E, 5 and 6. Phases 2, 3, 4A and 4B are done; 4E's end-to-end support is done. The optional stop after phase 2 was skipped: Sadia asked for no review stops.
 
 Where things are, for the next session:
 
@@ -13,8 +13,8 @@ Where things are, for the next session:
 - **Login checks:** `requireLogin`, `requireDoctor` and `requireAdmin` in `server/src/plugins/auth.ts`. `request.user` is the full user row, so convert it with `toPublicUser()` before sending. Register new route plugins inside the `/api` plugin in `server/src/app.ts`.
 - **Errors:** `sendError(reply, status, code, message)` in `server/src/plugins/errors.ts`. The error handler turns Zod failures into 400 `validation_failed`.
 - **Server test helpers** (`server/test/helpers/`): `useTestDatabase()`, `resetDb(db)`, `useTestApp(db, () => options)`, `createUser(db, overrides)`, `loginAs(app, user)`, `APP_HEADERS`. Test files run one at a time on `omp_test`.
-- **App:** `useRepository()` from `app/src/data/RepositoryProvider.tsx`, whose `createAppRepository(userId)` still returns the memory repository. `useUser()` and `useAuth()` from `app/src/auth/AuthProvider.tsx`. UI parts are in `app/src/ui/`; text colours that pass WCAG AA are `ds.txMuted`, `ds.priText`, `ds.goldText`, `ds.tealText`, `ds.greenText`, `ds.redText`.
-- **End-to-end:** `npm run start:test` builds, resets `omp_e2e` and starts the server in test mode. `e2e/support/env.ts` holds the test server's environment; `e2e/support/cli.ts` runs server commands against `omp_e2e`.
+- **App:** `useRepository()` from `app/src/data/RepositoryProvider.tsx`, whose `createAppRepository(userId)` still returns the memory repository seeded with the known students; 4C switches it. Screens load through `useRepositoryQuery()` (`app/src/doctor/useRepositoryQuery.ts`), which reloads when the provider's `notifyChanged()` runs; the sync engine should call it after a pull. Doctor screens are in `app/src/doctor/`, their routes in `app/src/doctor/routes.tsx`. Component tests render screens with `renderDoctorApp()` from `app/src/test/doctor-app.tsx`. `useUser()` and `useAuth()` from `app/src/auth/AuthProvider.tsx`. UI parts are in `app/src/ui/`; text colours that pass WCAG AA are `ds.txMuted`, `ds.priText`, `ds.goldText`, `ds.tealText`, `ds.greenText`, `ds.redText`.
+- **End-to-end:** `npm run start:test` builds, resets `omp_e2e` and starts the server in test mode. `e2e/support/fixtures.ts` gives `doctorPage`, `secondDoctorPage` and `adminPage` and resets the database before each file; `e2e/support/helpers/` holds `db.ts`, `axe.ts`, `layout.ts` and `doctor.ts`. Run with `npm run test:e2e`, which sets `NODE_OPTIONS=--conditions=development` so Playwright reads `@omp/shared` source.
 - **This Mac:** start every shell command with `eval "$(fnm env)" && fnm use 22`. PostgreSQL on 5434 (`npm run db:up`), server on 3000, Vite on 5180. Run `npx biome check --write .` before committing.
 - **Git:** commits authored by Sadia with no Co-Authored-By line; push only `build-v1` and tags to `origin`.
 
@@ -24,10 +24,10 @@ Where things are, for the next session:
 | 2 Contracts | Done | `contracts-v1` |
 | 3 Login and app shell | Done | `shell-v1` |
 | 4A Doctor API | Done | `phase-4a-v1` |
-| 4B Doctor screens | Not started | |
+| 4B Doctor screens | Done | `phase-4b-v1` |
 | 4C Offline and sync | Not started | |
 | 4D Admin dashboard | Not started | |
-| 4E Quality and deploy prep | Not started | |
+| 4E Quality and deploy prep | In progress: end-to-end support done | |
 | 5 Integration and hardening | Not started | |
 | 6 Verification gate | Not started | |
 
@@ -145,11 +145,53 @@ Speed on the local database: a push of 50 sessions and a first pull of 500 stude
 - **The cursor is the counter value as a decimal string**; anything else, including leading zeros, is `bad_cursor`.
 - **Sessions the admin deletes stay on the doctor's phone**: pull has no way to send a deletion, and the plan adds none.
 
+- CI run on `phase-4a-v1`: https://github.com/sadiash/omp-digicoach/actions/runs/35152803133 (green).
+
+## Phase 4B: Doctor screens
+
+### Checklist
+
+- [x] All tests pass: 287 unit and component tests; Playwright E2E-B1 to E2E-B4 pass on phone Chromium and phone WebKit. `app/src/doctor/timer/timer.ts` has 100% line, branch and function coverage.
+- [x] `grep -rn "setInterval\|setTimeout" app/src/doctor/timer/timer.ts` finds nothing. The 250 ms refresh lives in `useNow.ts` and only redraws.
+- [x] `grep -rln "dexie\|indexedDB\|fetch(" app/src/doctor` finds nothing.
+- [ ] Screenshots of each screen at 390 px on both phone projects, next to the prototype's. `e2e/tests/doctor/screenshots.spec.ts` attaches 15 screenshots per phone project to the Playwright report, which CI uploads. **Needs a person** to put them beside the prototype's in the pull request.
+
+### Anti-pattern checks
+
+- Counting ticks: no. Every reading subtracts timestamps passed in as `now`.
+- Moving on or closing at zero: no. E2E-B2 checks the step is unchanged at `+0:15`.
+- A star beside each prompt: no. One `RatingStars` per step (component test counts one group).
+- Screens calling `fetch` or Dexie: none (search above).
+- Another doctor's sessions or ratings: the memory repository filters by doctor; the progress component test checks it.
+- "Saved" before the repository confirms: the toast appears after `completeSession` resolves; a component test checks that a failed save shows no confirmation.
+
+### Choices the plan didn't make
+
+- **Tab bar hidden** on `/session`, `/session/setup` and `/session/log`, as in the prototype.
+- **Leaving a session** keeps the draft; the student list then shows "Session in progress" with Resume and Discard. Starting another session while a draft exists asks first.
+- **The resume prompt** ignores Escape, so a stray key never discards a session. Its question uses the time the session started.
+- **Timer display** counts down in whole seconds rounded up, so `0:00` means the minute is spent; extra time rounds down. The ring turns coral in extra time; the text uses a darker amber that passes contrast checks. The compact ring appears on screens under 760 px tall.
+- **Stored times are capped at six hours**, so a session left open for days still saves.
+- **Step 1's Back button is disabled** instead of the prototype's Skip, which did the same as Next.
+- **Saving a pearl needs the learner's answer from Step 1 and at least one point.** The prototype saved "General" when the answer was empty.
+- **Case type has no default**; Start waits until one is chosen. The department starts from the doctor's profile.
+- **Year is optional** for medical students.
+- **Usefulness and "learner gave the diagnosis" can be cleared** by tapping the chosen answer again.
+- **History groups by the phone's calendar day.** Stats count "this week" from Monday in the phone's time zone, and show sessions per weekday over all sessions.
+- **Student progress** is a table of ratings per step per session, not a chart, to keep the doctor app small and readable by screen readers.
+- **Draft saving**: 300 ms after each change, every 5 seconds, and when the page is hidden.
+- **App version** comes from `app/package.json`, now 1.0.0, through Vite's `define`.
+- **E2E-B1 to B4 run on the default build**: the memory repository is the default until 4C, so no `VITE_REPOSITORY=memory` switch was added. The memory repository holds the known students from `@omp/shared/fixtures` for these tests; 4C removes it from the app build.
+
+## Phase 4E: Quality and deploy prep (in progress)
+
+Done so far: `e2e/support/` with `auth.setup.ts` (saves the admin's and two doctors' logins), `fixtures.ts` (`adminPage`, `doctorPage`, `secondDoctorPage`, database reset before each file through the command line), and `helpers/` (`layout.ts` with `expectChipsStable` and `expectTextBoxesNotClipped`, `axe.ts` with `expectNoSeriousA11yIssues`, `db.ts` with read-only queries). Playwright runs one worker, because test files reset the shared database.
+
 ## Versions
 
 Every package added so far matches the major in `00-allowed-apis.md`: drizzle-orm 0.45.2, drizzle-kit 0.31.10, pg 8.23.0, @types/pg 8.23.1, @node-rs/argon2 2.2.1, msw 2.15.0, zod 4.6.5, @fastify/cookie 11.1.2, @fastify/rate-limit 11.2.0, @fastify/helmet 13.1.1, fastify-type-provider-zod 7.0.0, @testing-library/user-event 14.6.7.
 
-@vitest/coverage-v8 5.0.1.
+@vitest/coverage-v8 5.0.1, @axe-core/playwright 4.13.0.
 
 `lucide-react` 1.46.0 wasn't listed. Phase 3 read its documentation and added it to `00-allowed-apis.md`.
 
@@ -157,3 +199,4 @@ Every package added so far matches the major in `00-allowed-apis.md`: drizzle-or
 
 - Sadia's review of the contracts (phase 2).
 - Sadia's decision on login length for an account that is both doctor and admin (phase 3).
+- Putting the doctor screen screenshots beside the prototype's in the pull request (phase 4B).
