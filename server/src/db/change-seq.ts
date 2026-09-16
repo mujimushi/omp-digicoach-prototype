@@ -27,3 +27,13 @@ export async function readChangeCounter(db: {
   );
   return Number(result.rows[0]?.value ?? 0);
 }
+
+/**
+ * Locks the counter row at the start of a writing transaction, before any other row, so two
+ * transactions never wait on each other's rows in opposite order.
+ */
+export async function lockChangeCounter(tx: Tx): Promise<void> {
+  await tx.execute(
+    sql`select value from change_counter where id = 1 for update`,
+  );
+}
