@@ -261,6 +261,7 @@ const router = createBrowserRouter([
 - Create the app with `npm create vite@latest app -- --template react-ts`, and add `@vitejs/plugin-react`.
 - `@vitejs/plugin-react` 6 needs Vite 8 and transforms with Oxc, not Babel.
 - Dev server: `server: { port: 5180, strictPort: true, proxy: { '/api': 'http://127.0.0.1:3000' } }`. With `strictPort`, Vite stops instead of moving to another port when 5180 is taken.
+- The string form of a proxy entry sets `changeOrigin: true`, so the server sees `Host: 127.0.0.1:3000` while the browser sends `Origin: http://localhost:5180`, and the change-request guard refuses every login and save. Use `'/api': { target: 'http://127.0.0.1:3000', changeOrigin: false }`. (Found in phase 6 by logging in through `npm run dev`; `vite/dist/node/chunks/node.js` turns a string into `{ target, changeOrigin: true }`.)
 - Tests render routes with a memory router: `createMemoryRouter(routes, { initialEntries: ['/'] })` from `react-router`, passed to `RouterProvider` from `react-router/dom`. `app/src/router.tsx` exports `routes`, and `main.tsx` passes them to `createBrowserRouter`.
 
 Sources: reactrouter.com createBrowserRouter and the v7-to-v8 upgrade guide; vite.dev guide.
