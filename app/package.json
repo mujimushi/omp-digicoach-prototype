@@ -13,7 +13,8 @@
     "@omp/shared": "0.0.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "react-router": "8.4.0"
+    "react-router": "8.4.0",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@testing-library/dom": "10.4.2",
@@ -23,6 +24,7 @@
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
     "jsdom": "30.0.1",
+    "msw": "2.15.0",
     "vite": "8.3.0"
   }
 }
