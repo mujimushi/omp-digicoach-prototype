@@ -85,7 +85,7 @@ describe('route guards', () => {
     meAnswers(mockData.doctor);
     open('/');
     expect(
-      await screen.findByRole('heading', { name: 'Students' }),
+      await screen.findByText('Choose the learner to teach'),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('navigation', { name: 'Main' }),
@@ -107,7 +107,7 @@ describe('login and password change', () => {
     await user.click(screen.getByRole('button', { name: 'Log In' }));
 
     expect(
-      await screen.findByRole('heading', { name: 'Students' }),
+      await screen.findByText('Choose the learner to teach'),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/');
   });
@@ -200,7 +200,7 @@ describe('login and password change', () => {
     await user.click(screen.getByRole('button', { name: 'Save new password' }));
 
     expect(
-      await screen.findByRole('heading', { name: 'Students' }),
+      await screen.findByText('Choose the learner to teach'),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/');
   });

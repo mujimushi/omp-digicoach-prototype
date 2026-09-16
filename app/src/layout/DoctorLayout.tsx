@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Outlet, useLocation } from 'react-router';
 import { RepositoryProvider } from '../data/RepositoryProvider.tsx';
+import { ResumeGate } from '../doctor/session/ResumeGate.tsx';
 import { ds } from '../styles/tokens.ts';
 import { type Tab, TabBar } from '../ui/TabBar.tsx';
 
@@ -26,30 +27,32 @@ export function DoctorLayout() {
 
   return (
     <RepositoryProvider>
-      <div
-        style={{
-          height: '100dvh',
-          maxWidth: 500,
-          margin: '0 auto',
-          display: 'flex',
-          flexDirection: 'column',
-          background: ds.surface,
-          position: 'relative',
-        }}
-      >
+      <ResumeGate>
         <div
           style={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: 'auto',
+            height: '100dvh',
+            maxWidth: 500,
+            margin: '0 auto',
             display: 'flex',
             flexDirection: 'column',
+            background: ds.surface,
+            position: 'relative',
           }}
         >
-          <Outlet />
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <Outlet />
+          </div>
+          {showTabs && <TabBar tabs={DOCTOR_TABS} />}
         </div>
-        {showTabs && <TabBar tabs={DOCTOR_TABS} />}
-      </div>
+      </ResumeGate>
     </RepositoryProvider>
   );
 }

@@ -3,8 +3,9 @@ import { AuthProvider } from './auth/AuthProvider.tsx';
 import { ChangePasswordScreen } from './auth/ChangePasswordScreen.tsx';
 import { RequireDoctorArea, RequireLogin } from './auth/guards.tsx';
 import { LoginScreen } from './auth/LoginScreen.tsx';
+import { doctorRoutes } from './doctor/routes.tsx';
 import { DoctorLayout } from './layout/DoctorLayout.tsx';
-import { NotFound, PlaceholderPage } from './layout/PlaceholderPage.tsx';
+import { NotFound } from './layout/PlaceholderPage.tsx';
 import { ToastProvider } from './ui/Toast.tsx';
 
 function AppRoot() {
@@ -16,26 +17,6 @@ function AppRoot() {
     </AuthProvider>
   );
 }
-
-const placeholder = (name: string) => () => <PlaceholderPage name={name} />;
-
-/** The doctor app's pages. Lane 4B replaces each placeholder. */
-export const doctorRoutes: RouteObject[] = [
-  { index: true, Component: placeholder('Students') },
-  { path: 'students/new', Component: placeholder('Add student') },
-  { path: 'students/:id/edit', Component: placeholder('Correct student') },
-  { path: 'session/setup', Component: placeholder('Session setup') },
-  { path: 'session', Component: placeholder('Session') },
-  { path: 'session/log', Component: placeholder('Quick log') },
-  { path: 'history', Component: placeholder('History') },
-  { path: 'history/:id', Component: placeholder('Session details') },
-  { path: 'stats', Component: placeholder('Stats') },
-  { path: 'progress', Component: placeholder('Student progress') },
-  { path: 'progress/:studentId', Component: placeholder('Student progress') },
-  { path: 'more', Component: placeholder('More') },
-  { path: 'pearls', Component: placeholder('Teaching pearls') },
-  { path: 'about', Component: placeholder('About') },
-];
 
 export const routes: RouteObject[] = [
   {
