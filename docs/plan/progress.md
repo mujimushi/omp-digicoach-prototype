@@ -4,7 +4,7 @@ Branch `build-v1`, one pull request into `main` at the end. Each phase's last co
 
 ## Resume here
 
-**Next: phase 4C, Offline and sync** (`docs/plan/04c-offline-sync.md`), then 4D, the rest of 4E, 5 and 6. Phases 2, 3, 4A and 4B are done; 4E's end-to-end support is done. The optional stop after phase 2 was skipped: Sadia asked for no review stops.
+**Next: phase 4D, Admin dashboard** (`docs/plan/04d-admin-dashboard.md`), then the rest of 4E, 5 and 6. Phases 2, 3, 4A, 4B and 4C are done; 4E's end-to-end support is done. The optional stop after phase 2 was skipped: Sadia asked for no review stops.
 
 Where things are, for the next session:
 
@@ -13,7 +13,8 @@ Where things are, for the next session:
 - **Login checks:** `requireLogin`, `requireDoctor` and `requireAdmin` in `server/src/plugins/auth.ts`. `request.user` is the full user row, so convert it with `toPublicUser()` before sending. Register new route plugins inside the `/api` plugin in `server/src/app.ts`.
 - **Errors:** `sendError(reply, status, code, message)` in `server/src/plugins/errors.ts`. The error handler turns Zod failures into 400 `validation_failed`.
 - **Server test helpers** (`server/test/helpers/`): `useTestDatabase()`, `resetDb(db)`, `useTestApp(db, () => options)`, `createUser(db, overrides)`, `loginAs(app, user)`, `APP_HEADERS`. Test files run one at a time on `omp_test`.
-- **App:** `useRepository()` from `app/src/data/RepositoryProvider.tsx`, whose `createAppRepository(userId)` still returns the memory repository seeded with the known students; 4C switches it. Screens load through `useRepositoryQuery()` (`app/src/doctor/useRepositoryQuery.ts`), which reloads when the provider's `notifyChanged()` runs; the sync engine should call it after a pull. Doctor screens are in `app/src/doctor/`, their routes in `app/src/doctor/routes.tsx`. Component tests render screens with `renderDoctorApp()` from `app/src/test/doctor-app.tsx`. `useUser()` and `useAuth()` from `app/src/auth/AuthProvider.tsx`. UI parts are in `app/src/ui/`; text colours that pass WCAG AA are `ds.txMuted`, `ds.priText`, `ds.goldText`, `ds.tealText`, `ds.greenText`, `ds.redText`.
+- **App:** `useRepository()` from `app/src/data/RepositoryProvider.tsx`, whose `createAppRepository()` returns the Dexie repository (`app/src/offline/`); the memory repository is used only in tests. Screens load through `useRepositoryQuery()` (`app/src/doctor/useRepositoryQuery.ts`), which reloads when the provider's `notifyChanged()` runs; the sync engine should call it after a pull. Doctor screens are in `app/src/doctor/`, their routes in `app/src/doctor/routes.tsx`. Component tests render screens with `renderDoctorApp()` from `app/src/test/doctor-app.tsx`. `useUser()` and `useAuth()` from `app/src/auth/AuthProvider.tsx`. UI parts are in `app/src/ui/`; text colours that pass WCAG AA are `ds.txMuted`, `ds.priText`, `ds.goldText`, `ds.tealText`, `ds.greenText`, `ds.redText`.
+- **Offline:** `getPhoneDb()` in `app/src/offline/db.ts`; the sync engine in `sync.ts` runs inside `SyncProvider` in the doctor layout; `phone-auth.ts` keeps the last user and blocks a second user while items wait. `server/test/integration/phone-sync.test.ts` runs the engine against the real routes and has its own tsconfig with the DOM library.
 - **End-to-end:** `npm run start:test` builds, resets `omp_e2e` and starts the server in test mode. `e2e/support/fixtures.ts` gives `doctorPage`, `secondDoctorPage` and `adminPage` and resets the database before each file; `e2e/support/helpers/` holds `db.ts`, `axe.ts`, `layout.ts` and `doctor.ts`. Run with `npm run test:e2e`, which sets `NODE_OPTIONS=--conditions=development` so Playwright reads `@omp/shared` source.
 - **This Mac:** start every shell command with `eval "$(fnm env)" && fnm use 22`. PostgreSQL on 5434 (`npm run db:up`), server on 3000, Vite on 5180. Run `npx biome check --write .` before committing.
 - **Git:** commits authored by Sadia with no Co-Authored-By line; push only `build-v1` and tags to `origin`.
@@ -25,7 +26,7 @@ Where things are, for the next session:
 | 3 Login and app shell | Done | `shell-v1` |
 | 4A Doctor API | Done | `phase-4a-v1` |
 | 4B Doctor screens | Done | `phase-4b-v1` |
-| 4C Offline and sync | Not started | |
+| 4C Offline and sync | Done | `phase-4c-v1` |
 | 4D Admin dashboard | Not started | |
 | 4E Quality and deploy prep | In progress: end-to-end support done | |
 | 5 Integration and hardening | Not started | |
@@ -183,6 +184,49 @@ Speed on the local database: a push of 50 sessions and a first pull of 500 stude
 - **App version** comes from `app/package.json`, now 1.0.0, through Vite's `define`.
 - **E2E-B1 to B4 run on the default build**: the memory repository is the default until 4C, so no `VITE_REPOSITORY=memory` switch was added. The memory repository holds the known students from `@omp/shared/fixtures` for these tests; 4C removes it from the app build.
 
+- CI run on `phase-4b-v1`: https://github.com/sadiash/omp-digicoach/actions/runs/35154411711 (green).
+
+## Phase 4C: Offline and sync
+
+### Checklist
+
+- [x] The repository contract suite passes on the Dexie repository (`app/src/offline/dexie-repository.test.ts`, on fake-indexeddb with a fresh `IDBFactory` per test).
+- [x] All unit and component tests pass: 348 unit and component tests. Line coverage of `app/src/offline/sync.ts` is 95.9%.
+- [x] E2E-C1 to E2E-C4 pass on phone Chromium; E2E-C3 also on phone WebKit.
+- [x] `grep -n "autoUpdate\|runtimeCaching\|injectRegister: null" app/vite.config.ts` finds nothing.
+- [x] `grep -rn "SyncManager\|localStorage" app/src/offline` finds nothing.
+- [x] After `npm run build -w app`, no `admin-*.js` name appears in `app/dist/sw.js`.
+- [ ] Real-phone checks: iPhone Add to Home Screen, airplane mode, record, reopen next day with signal; Android install and the same steps. **Needs a person.**
+- Server integration: `server/test/integration/phone-sync.test.ts` saves a student and a session while the server is down, syncs against the real routes, and finds one student, one session and five steps after two syncs.
+
+### Anti-pattern checks
+
+- `registerType: 'autoUpdate'`: no, `prompt`.
+- Workbox runtime caching for `/api`: none; E2E-C4 checks that offline API requests fail rather than answer.
+- Background Sync API: not used; the engine runs at start, on `online`, on visibility, 2 s after a save and every 60 s.
+- `localStorage` for the outbox or drafts: no; the install guide's dismissal is stored in Dexie too.
+- Deciding to send from `navigator.onLine`: no; it only colours the badge.
+- Deleting an outbox item before the server confirms it: no; unit tests cover applied, duplicate, kept and refused items.
+- Clearing phone data at logout without warning while items wait: no; the More screen asks first (component test).
+- Relying on `navigateFallbackDenylist` alone to keep admin code off phones: no; `globIgnores` excludes `admin-*.js` (checked in `sw.js`).
+
+### Choices the plan didn't make
+
+- **The precache ignores `manifest.webmanifest`**, because the plugin adds it too and Workbox otherwise refuses to install. Recorded in `00-allowed-apis.md`.
+- **Icons are generated at build time** through `pwaAssets` and `app/pwa-assets.config.ts`, so no generated PNGs are committed.
+- **The app opens offline with the last user on the phone**, stored in Dexie's `meta` table (`user`, `userId`). The first login still needs a connection.
+- **A sync that gets 401** shows a banner with the server's message (for a switched-off account: "This account has been switched off. Ask the admin.") and a Log in button, instead of leaving the screen, so a session in progress isn't interrupted. Nothing on the phone is deleted.
+- **A second user is blocked** twice: before contacting the server when the typed username differs from the phone's last user and items wait, and after login by ID, which also ends the new login on the server. With nothing waiting, the phone is emptied for the new user.
+- **Logout deletes the Dexie database** in every case, after asking when items wait. An admin who logs out on a desktop also clears that browser's phone database, which holds nothing of theirs.
+- **Pulls don't overwrite a student or pearl** that still has an item waiting in the outbox; the next pull after it sends brings the server's version.
+- **A cursor the server refuses** (`bad_cursor`) starts a full pull from an empty cursor.
+- **Pulled aliases also remap a local student** whose ID matches, for a phone that never heard the push answer.
+- **Retries** follow 5 s, 15 s, 60 s and then 5 minutes after a network error, a 5xx or an unexpected error.
+- **The update prompt** assumes a draft exists until IndexedDB answers, so it never interrupts a session while loading.
+- **The install guide** shows on the student list (dismissible for 7 days) and on the More screen (always, until installed). It shows nothing on desktops.
+- **`navigator.storage.persist()`** runs when the doctor layout opens in the installed app.
+- **Every phone database write that stores a record also queues it** in the same Dexie transaction; a failing outbox write rolls the record back (tested with a repeated opId).
+
 ## Phase 4E: Quality and deploy prep (in progress)
 
 Done so far: `e2e/support/` with `auth.setup.ts` (saves the admin's and two doctors' logins), `fixtures.ts` (`adminPage`, `doctorPage`, `secondDoctorPage`, database reset before each file through the command line), and `helpers/` (`layout.ts` with `expectChipsStable` and `expectTextBoxesNotClipped`, `axe.ts` with `expectNoSeriousA11yIssues`, `db.ts` with read-only queries). Playwright runs one worker, because test files reset the shared database.
@@ -191,7 +235,7 @@ Done so far: `e2e/support/` with `auth.setup.ts` (saves the admin's and two doct
 
 Every package added so far matches the major in `00-allowed-apis.md`: drizzle-orm 0.45.2, drizzle-kit 0.31.10, pg 8.23.0, @types/pg 8.23.1, @node-rs/argon2 2.2.1, msw 2.15.0, zod 4.6.5, @fastify/cookie 11.1.2, @fastify/rate-limit 11.2.0, @fastify/helmet 13.1.1, fastify-type-provider-zod 7.0.0, @testing-library/user-event 14.6.7.
 
-@vitest/coverage-v8 5.0.1, @axe-core/playwright 4.13.0.
+@vitest/coverage-v8 5.0.1, @axe-core/playwright 4.13.0, dexie 4.4.6, dexie-react-hooks 4.4.0, fake-indexeddb 6.2.5, vite-plugin-pwa 1.3.0, @vite-pwa/assets-generator 2.0.0.
 
 `lucide-react` 1.46.0 wasn't listed. Phase 3 read its documentation and added it to `00-allowed-apis.md`.
 
@@ -200,3 +244,4 @@ Every package added so far matches the major in `00-allowed-apis.md`: drizzle-or
 - Sadia's review of the contracts (phase 2).
 - Sadia's decision on login length for an account that is both doctor and admin (phase 3).
 - Putting the doctor screen screenshots beside the prototype's in the pull request (phase 4B).
+- Real-phone checks on an iPhone and an Android phone: install, airplane mode, a session recorded offline and sent the next day (phase 4C).
