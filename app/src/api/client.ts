@@ -1,23 +1,8 @@
-import { ApiError, type ErrorCode } from '@omp/shared';
+import { ApiError } from '@omp/shared';
 import type { z } from 'zod';
+import { ApiRequestError, NetworkError } from './errors.ts';
 
-/** The server answered with an error. */
-export class ApiRequestError extends Error {
-  override name = 'ApiRequestError';
-  readonly status: number;
-  readonly code: ErrorCode;
-
-  constructor(status: number, code: ErrorCode, message: string) {
-    super(message);
-    this.status = status;
-    this.code = code;
-  }
-}
-
-/** The request never got an answer: no signal, or the server is down. */
-export class NetworkError extends Error {
-  override name = 'NetworkError';
-}
+export { ApiRequestError, NetworkError } from './errors.ts';
 
 type RequestOptions = {
   /** Sync keeps the doctor where they are on a 401; everything else goes to /login. */
