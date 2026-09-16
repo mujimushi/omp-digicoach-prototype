@@ -18,6 +18,7 @@ import { errorHandler, sendError } from './plugins/errors.ts';
 import { authRoutes } from './routes/auth/index.ts';
 import { healthRoutes } from './routes/health.ts';
 import { meRoutes } from './routes/me/index.ts';
+import { syncRoutes } from './routes/sync/index.ts';
 
 export type BuildAppOptions = {
   config: Config;
@@ -82,6 +83,7 @@ export async function buildApp(
       await api.register(healthRoutes);
       await api.register(authRoutes, { prefix: '/auth' });
       await api.register(meRoutes, { prefix: '/me' });
+      await api.register(syncRoutes, { prefix: '/sync' });
       if (options.extraApiRoutes) await api.register(options.extraApiRoutes);
       // Scoped to /api, so unknown API paths answer JSON even when a browser asks for HTML.
       api.setNotFoundHandler((request, reply) =>
