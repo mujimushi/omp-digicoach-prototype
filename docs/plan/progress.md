@@ -4,7 +4,7 @@ Branch `build-v1`, one pull request into `main` at the end. Each phase's last co
 
 ## Resume here
 
-**Next: phase 4D, Admin dashboard** (`docs/plan/04d-admin-dashboard.md`), then the rest of 4E, 5 and 6. Phases 2, 3, 4A, 4B and 4C are done; 4E's end-to-end support is done. The optional stop after phase 2 was skipped: Sadia asked for no review stops.
+**Next: the rest of phase 4E** (`docs/plan/04e-quality-ops.md`: CI jobs, nightly workflow, migration and bundle checks, app spec, runbooks), then 5 and 6. Phases 2, 3 and 4A to 4D are done. The optional stop after phase 2 was skipped: Sadia asked for no review stops.
 
 Where things are, for the next session:
 
@@ -14,6 +14,7 @@ Where things are, for the next session:
 - **Errors:** `sendError(reply, status, code, message)` in `server/src/plugins/errors.ts`. The error handler turns Zod failures into 400 `validation_failed`.
 - **Server test helpers** (`server/test/helpers/`): `useTestDatabase()`, `resetDb(db)`, `useTestApp(db, () => options)`, `createUser(db, overrides)`, `loginAs(app, user)`, `APP_HEADERS`. Test files run one at a time on `omp_test`.
 - **App:** `useRepository()` from `app/src/data/RepositoryProvider.tsx`, whose `createAppRepository()` returns the Dexie repository (`app/src/offline/`); the memory repository is used only in tests. Screens load through `useRepositoryQuery()` (`app/src/doctor/useRepositoryQuery.ts`), which reloads when the provider's `notifyChanged()` runs; the sync engine should call it after a pull. Doctor screens are in `app/src/doctor/`, their routes in `app/src/doctor/routes.tsx`. Component tests render screens with `renderDoctorApp()` from `app/src/test/doctor-app.tsx`. `useUser()` and `useAuth()` from `app/src/auth/AuthProvider.tsx`. UI parts are in `app/src/ui/`; text colours that pass WCAG AA are `ds.txMuted`, `ds.priText`, `ds.goldText`, `ds.tealText`, `ds.greenText`, `ds.redText`.
+- **Dashboard:** server routes in `server/src/routes/admin/` (the admin check is a hook on the plugin), queries in `server/src/services/reports/` and `services/doctors/`. Screens in `app/src/admin/`, loaded through TanStack Query; `renderAdmin()` in `app/src/test/admin-app.tsx` renders a page against the MSW handlers.
 - **Offline:** `getPhoneDb()` in `app/src/offline/db.ts`; the sync engine in `sync.ts` runs inside `SyncProvider` in the doctor layout; `phone-auth.ts` keeps the last user and blocks a second user while items wait. `server/test/integration/phone-sync.test.ts` runs the engine against the real routes and has its own tsconfig with the DOM library.
 - **End-to-end:** `npm run start:test` builds, resets `omp_e2e` and starts the server in test mode. `e2e/support/fixtures.ts` gives `doctorPage`, `secondDoctorPage` and `adminPage` and resets the database before each file; `e2e/support/helpers/` holds `db.ts`, `axe.ts`, `layout.ts` and `doctor.ts`. Run with `npm run test:e2e`, which sets `NODE_OPTIONS=--conditions=development` so Playwright reads `@omp/shared` source.
 - **This Mac:** start every shell command with `eval "$(fnm env)" && fnm use 22`. PostgreSQL on 5434 (`npm run db:up`), server on 3000, Vite on 5180. Run `npx biome check --write .` before committing.
@@ -27,7 +28,7 @@ Where things are, for the next session:
 | 4A Doctor API | Done | `phase-4a-v1` |
 | 4B Doctor screens | Done | `phase-4b-v1` |
 | 4C Offline and sync | Done | `phase-4c-v1` |
-| 4D Admin dashboard | Not started | |
+| 4D Admin dashboard | Done | `phase-4d-v1` |
 | 4E Quality and deploy prep | In progress: end-to-end support done | |
 | 5 Integration and hardening | Not started | |
 | 6 Verification gate | Not started | |
@@ -227,6 +228,140 @@ Speed on the local database: a push of 50 sessions and a first pull of 500 stude
 - **`navigator.storage.persist()`** runs when the doctor layout opens in the installed app.
 - **Every phone database write that stores a record also queues it** in the same Dexie transaction; a failing outbox write rolls the record back (tested with a repeated opId).
 
+- CI run on `phase-4c-v1`: https://github.com/sadiash/omp-digicoach/actions/runs/35156555022 (green).
+
+## Phase 4D: Admin dashboard
+
+### Checklist
+
+- [x] All tests pass: 358 unit and component tests, 214 server tests, E2E-D1 to D6 on desktop Chromium. Line coverage: `server/src/services/reports/` 100%, `server/src/services/doctors/` 94%.
+- [x] Adding a dummy admin route without a permission case made the permission test fail ("expected [ 'GET /api/admin/dummy' ] to deeply equal []"). The route was then removed.
+- [x] `EXPLAIN` output for the three heaviest report queries is below.
+- [x] `npm run build -w app` produces a separate `admin-<hash>.js` chunk (133 KB gzipped, holding Recharts and TanStack Query). The doctor entry is 192 KB gzipped.
+- [ ] A printed student report, saved as PDF, attached to the pull request. E2E-D4 saves `student-report.pdf` and a print-mode screenshot into the Playwright report. **Needs a person** to attach them.
+
+Speed with ten times the seed data (120 users, 600 students, 4,000 sessions), from `server/test/admin/speed.test.ts` on the local database: overview 6 ms, doctors 18 ms, doctor detail 12 ms, students 27 ms, student search sorted by sessions 28 ms, student detail 3 ms, sessions 5 ms, session detail 3 ms, CSV export 100 ms. The limit is 500 ms.
+
+### EXPLAIN on ten times the seed data
+
+No index was added. The whole-table scans are the two reports that summarise every student and every doctor, and a month-long CSV range that covers 44% of a 4,000-row table; each runs in under 20 ms.
+
+### Student summaries (GET /api/admin/students)
+
+```
+Sort  (cost=2711.38..2712.88 rows=600 width=104) (actual time=17.871..17.892 rows=600 loops=1)
+  Sort Key: (lower(st.name)), st.id
+  Sort Method: quicksort  Memory: 78kB
+  ->  GroupAggregate  (cost=2324.69..2683.69 rows=600 width=104) (actual time=13.478..17.374 rows=600 loops=1)
+        Group Key: st.id
+        ->  Sort  (cost=2324.69..2374.69 rows=20000 width=72) (actual time=13.420..14.157 rows=20000 loops=1)
+              Sort Key: st.id, s.id
+              Sort Method: quicksort  Memory: 2704kB
+              ->  Hash Right Join  (cost=198.50..895.92 rows=20000 width=72) (actual time=1.051..8.171 rows=20000 loops=1)
+                    Hash Cond: (s.student_id = st.id)
+                    ->  Hash Right Join  (cost=175.00..819.56 rows=20000 width=60) (actual time=0.933..5.692 rows=20000 loops=1)
+                          Hash Cond: (ss.session_id = s.id)
+                          ->  Seq Scan on session_steps ss  (cost=0.00..592.00 rows=20000 width=20) (actual time=0.004..1.709 rows=20000 loops=1)
+                          ->  Hash  (cost=125.00..125.00 rows=4000 width=56) (actual time=0.915..0.916 rows=4000 loops=1)
+                                Buckets: 4096  Batches: 1  Memory Usage: 376kB
+                                ->  Seq Scan on teaching_sessions s  (cost=0.00..125.00 rows=4000 width=56) (actual time=0.002..0.466 rows=4000 loops=1)
+                    ->  Hash  (cost=16.00..16.00 rows=600 width=28) (actual time=0.112..0.112 rows=600 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 44kB
+                          ->  Seq Scan on students st  (cost=0.00..16.00 rows=600 width=28) (actual time=0.005..0.055 rows=600 loops=1)
+Planning Time: 0.465 ms
+Execution Time: 18.030 ms
+```
+
+### Doctor activity (GET /api/admin/doctors)
+
+```
+Sort  (cost=91602.77..91603.07 rows=120 width=144) (actual time=13.253..13.259 rows=120 loops=1)
+  Sort Key: (lower(u.name)), u.id
+  Sort Method: quicksort  Memory: 35kB
+  ->  GroupAggregate  (cost=1155.10..91598.63 rows=120 width=144) (actual time=1.126..13.145 rows=120 loops=1)
+        Group Key: u.id
+        ->  Incremental Sort  (cost=1155.10..91496.53 rows=4000 width=84) (actual time=1.117..12.247 rows=4108 loops=1)
+              Sort Key: u.id, s.student_id
+              Presorted Key: u.id
+              Full-sort Groups: 13  Sort Method: quicksort  Average Memory: 31kB  Peak Memory: 31kB
+              Pre-sorted Groups: 116  Sort Method: quicksort  Average Memory: 39kB  Peak Memory: 40kB
+              ->  Nested Loop Left Join  (cost=396.37..91342.95 rows=4000 width=84) (actual time=0.878..11.272 rows=4108 loops=1)
+                    ->  Merge Left Join  (cost=373.66..434.26 rows=4000 width=76) (actual time=0.872..1.523 rows=4108 loops=1)
+                          Merge Cond: (u.id = s.doctor_id)
+                          ->  Sort  (cost=9.34..9.64 rows=120 width=32) (actual time=0.029..0.036 rows=120 loops=1)
+                                Sort Key: u.id
+                                Sort Method: quicksort  Memory: 31kB
+                                ->  Seq Scan on users u  (cost=0.00..5.20 rows=120 width=32) (actual time=0.004..0.014 rows=120 loops=1)
+                          ->  Sort  (cost=364.32..374.32 rows=4000 width=60) (actual time=0.840..1.042 rows=4000 loops=1)
+                                Sort Key: s.doctor_id
+                                Sort Method: quicksort  Memory: 440kB
+                                ->  Seq Scan on teaching_sessions s  (cost=0.00..125.00 rows=4000 width=60) (actual time=0.002..0.403 rows=4000 loops=1)
+                    ->  Aggregate  (cost=22.71..22.72 rows=1 width=8) (actual time=0.002..0.002 rows=1 loops=4108)
+                          ->  Bitmap Heap Scan on session_steps ss  (cost=4.33..22.69 rows=5 width=2) (actual time=0.001..0.001 rows=5 loops=4108)
+                                Recheck Cond: (session_id = s.id)
+                                Heap Blocks: exact=4504
+                                ->  Bitmap Index Scan on session_steps_session_id_step_pk  (cost=0.00..4.32 rows=5 width=0) (actual time=0.001..0.001 rows=5 loops=4108)
+                                      Index Cond: (session_id = s.id)
+Planning Time: 0.181 ms
+Execution Time: 13.296 ms
+```
+
+### CSV export for one month (GET /api/admin/export/sessions.csv?from=&to=)
+
+```
+Sort  (cost=40458.87..40463.28 rows=1763 width=56) (actual time=7.223..7.282 rows=1767 loops=1)
+  Sort Key: s.started_at, s.id
+  Sort Method: quicksort  Memory: 192kB
+  ->  Hash Join  (cost=30.20..40363.82 rows=1763 width=56) (actual time=0.123..6.962 rows=1767 loops=1)
+        Hash Cond: (s.student_id = st.id)
+        ->  Hash Join  (cost=6.70..156.49 rows=1763 width=40) (actual time=0.027..0.647 rows=1767 loops=1)
+              Hash Cond: (s.doctor_id = u.id)
+              ->  Seq Scan on teaching_sessions s  (cost=0.00..145.00 rows=1763 width=56) (actual time=0.004..0.399 rows=1767 loops=1)
+                    Filter: ((started_at >= '2026-07-31 19:00:00+00'::timestamp with time zone) AND (started_at < '2026-08-31 19:00:00+00'::timestamp with time zone))
+                    Rows Removed by Filter: 2233
+              ->  Hash  (cost=5.20..5.20 rows=120 width=16) (actual time=0.020..0.020 rows=120 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 14kB
+                    ->  Seq Scan on users u  (cost=0.00..5.20 rows=120 width=16) (actual time=0.001..0.011 rows=120 loops=1)
+        ->  Hash  (cost=16.00..16.00 rows=600 width=16) (actual time=0.085..0.085 rows=600 loops=1)
+              Buckets: 1024  Batches: 1  Memory Usage: 37kB
+              ->  Seq Scan on students st  (cost=0.00..16.00 rows=600 width=16) (actual time=0.002..0.046 rows=600 loops=1)
+        SubPlan 1
+          ->  Aggregate  (cost=22.78..22.79 rows=1 width=32) (actual time=0.003..0.003 rows=1 loops=1767)
+                ->  Sort  (cost=22.75..22.77 rows=5 width=4) (actual time=0.002..0.003 rows=5 loops=1767)
+                      Sort Key: ss.step
+                      Sort Method: quicksort  Memory: 25kB
+                      ->  Bitmap Heap Scan on session_steps ss  (cost=4.33..22.69 rows=5 width=4) (actual time=0.001..0.002 rows=5 loops=1767)
+                            Recheck Cond: (session_id = s.id)
+                            Heap Blocks: exact=1988
+                            ->  Bitmap Index Scan on session_steps_session_id_step_pk  (cost=0.00..4.32 rows=5 width=0) (actual time=0.001..0.001 rows=5 loops=1767)
+                                  Index Cond: (session_id = s.id)
+Planning Time: 0.263 ms
+Execution Time: 7.379 ms
+```
+
+### Anti-pattern checks
+
+- Admin rights checked only in the screens: no. `requireAdmin` is a hook on the admin plugin; the permission test covers every registered route.
+- A temporary password shown again, stored or logged unhashed: no. It is returned once, shown once in page memory, and `audit_log` never holds it (tested).
+- An admin switching off or un-admining their own account: refused with 409 (tested).
+- CSV by string joining without quoting, without a byte-order mark, or with formula-like cells: no (tested by parsing the export back).
+- Report numbers worked out in the browser: no. Every figure, average and spread comes from the server. The student report's date range only chooses which of the server's rows to show.
+- `ResponsiveContainer` in component tests: no. Tests provide `ChartSizeContext` with a fixed size.
+
+### Choices the plan didn't make
+
+- **Switching a doctor off marks their logins as ended** (`login_sessions.ended_reason`, a new nullable column from a generated migration) instead of deleting the rows at once. Each login stops working immediately and never works again, even if the doctor is switched on; the first request from each device gets 401 with "This account has been switched off. Ask the admin." and the row is then deleted. Without this, the phone couldn't tell a switched-off account from an expired login, which E2E-D2 and E2E-10 need.
+- **The doctors list shows every user**, admins included, with a Role column, so the admin manages everyone in one place.
+- **CSV values**: enum columns use their stored keys (such as `medical_student`, `long_case`, `medicine`), `learner_gave_diagnosis` and `pearl_used` are `yes`, `no` or empty, and lines end with CRLF.
+- **The export's file name uses today's date in Pakistan time.**
+- **Weeks start on Monday and months on the 1st, in Pakistan time**, for "this week", "this month" and the 12-week chart.
+- **Admin sessions list and reports sort newest first**; the student report's date range filters the student's sessions on the page.
+- **Delete session** records the whole session, with its steps and doctor, in `audit_log.before`.
+- **`remove-test-records`** refuses IDs that aren't UUIDs, reports sessions it couldn't find and students it kept (with the reason), and exits with code 2 when it kept anything. It also removes aliases that point to a removed student.
+- **The doctor form's Generate password** makes the readable password in the browser (`crypto.getRandomValues`); the server checks it against the password rules like any typed one.
+- **Charts** carry a hidden table with the same numbers for screen readers.
+- **The admin's CSS** (`admin-*.css`) is also left out of the phone's precache.
+
 ## Phase 4E: Quality and deploy prep (in progress)
 
 Done so far: `e2e/support/` with `auth.setup.ts` (saves the admin's and two doctors' logins), `fixtures.ts` (`adminPage`, `doctorPage`, `secondDoctorPage`, database reset before each file through the command line), and `helpers/` (`layout.ts` with `expectChipsStable` and `expectTextBoxesNotClipped`, `axe.ts` with `expectNoSeriousA11yIssues`, `db.ts` with read-only queries). Playwright runs one worker, because test files reset the shared database.
@@ -235,7 +370,7 @@ Done so far: `e2e/support/` with `auth.setup.ts` (saves the admin's and two doct
 
 Every package added so far matches the major in `00-allowed-apis.md`: drizzle-orm 0.45.2, drizzle-kit 0.31.10, pg 8.23.0, @types/pg 8.23.1, @node-rs/argon2 2.2.1, msw 2.15.0, zod 4.6.5, @fastify/cookie 11.1.2, @fastify/rate-limit 11.2.0, @fastify/helmet 13.1.1, fastify-type-provider-zod 7.0.0, @testing-library/user-event 14.6.7.
 
-@vitest/coverage-v8 5.0.1, @axe-core/playwright 4.13.0, dexie 4.4.6, dexie-react-hooks 4.4.0, fake-indexeddb 6.2.5, vite-plugin-pwa 1.3.0, @vite-pwa/assets-generator 2.0.0.
+@vitest/coverage-v8 5.0.1, @axe-core/playwright 4.13.0, dexie 4.4.6, dexie-react-hooks 4.4.0, fake-indexeddb 6.2.5, vite-plugin-pwa 1.3.0, @vite-pwa/assets-generator 2.0.0, @tanstack/react-query 5.103.1, recharts 3.10.1.
 
 `lucide-react` 1.46.0 wasn't listed. Phase 3 read its documentation and added it to `00-allowed-apis.md`.
 
@@ -245,3 +380,4 @@ Every package added so far matches the major in `00-allowed-apis.md`: drizzle-or
 - Sadia's decision on login length for an account that is both doctor and admin (phase 3).
 - Putting the doctor screen screenshots beside the prototype's in the pull request (phase 4B).
 - Real-phone checks on an iPhone and an Android phone: install, airplane mode, a session recorded offline and sent the next day (phase 4C).
+- Attaching the printed student report PDF from E2E-D4 to the pull request (phase 4D).
