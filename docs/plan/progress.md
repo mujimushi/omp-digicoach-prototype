@@ -92,7 +92,7 @@ Where things are, for the next session:
 
 ### Choices the plan didn't make
 
-- **An account that is both doctor and admin follows the admin's login lengths** (30 minutes idle, 8 hours at most), including on the phone. The plan gives each role's length but not the combined case. **Sadia should confirm this**, because it means Prof. Muneeza logs in again on her phone after 30 minutes. Phone data waits safely meanwhile.
+- **An account that is both doctor and admin follows the admin's login lengths** (30 minutes idle, 8 hours at most), including on the phone. The plan gives each role's length but not the combined case. Replaced on 2026-09-17: see Decisions after phase 6.
 - **A switched-off account** gets 401 `not_logged_in` with the message "This account has been switched off. Ask the admin." The code stays as `api.md` says; the message lets the app explain.
 - **A locked username gets 429 even with the right password.** Failed attempts during a lock don't add to the count. A wrong current password on the password-change screen doesn't count towards the lock.
 - **Common passwords:** SecLists' 10,000 most common passwords (MIT licence), matched ignoring case, also with leading or trailing digits and symbols removed, so "password1234567" is refused. Passwords of only one or two distinct characters are refused too. "Contains the app name" means contains `digicoach`.
@@ -520,7 +520,9 @@ Ten times the seed data (120 users, 600 students, 4,000 sessions) in a scratch d
 
 ## Decisions after phase 6
 
-- **Password minimum: 6 characters (2026-09-17).** Sadia found 15 too long. `LIMITS.passwordMin` is now 6, used by the server's rules, the shared schemas and the change-password and doctor forms. NIST SP 800-63B-4 asks for 15 when the password is the only login factor; `00-allowed-apis.md` records the difference. The common-password list, app-name and username checks stay, so a word from the list with digits added, such as "coach123", is still refused. `docs/build-plan.md`, `03-login-and-shell.md` and `06-verification.md` still say 15; this decision replaces them.
+- **Password minimum: 6 characters (2026-09-17).** Sadia found 15 too long. `LIMITS.passwordMin` is now 6, used by the server's rules, the shared schemas and the change-password and doctor forms. NIST SP 800-63B-4 asks for 15 when the password is the only login factor; `00-allowed-apis.md` records the difference. `docs/build-plan.md`, `03-login-and-shell.md` and `06-verification.md` still say 15; this decision replaces them.
+- **No common-password list (2026-09-17).** Sadia asked to remove the 10,000-password list, so "coach123" is accepted. `common-passwords.txt` is deleted. A password still needs more than two different characters and mustn't contain the app's name or the username.
+- **Doctors stay logged in (2026-09-17).** A doctor's login, including a doctor who is also admin, lasts while the app is used at least once every 400 days; each use moves the end forward and sends the cookie again (400 days is the longest browsers keep a cookie). Admin-only accounts keep 30 minutes idle and 8 hours. Sadia chose that a doctor who is also admin stays logged in on the phone, but the dashboard asks for the password again once 8 hours have passed since it was typed: admin routes answer 401 "Log in again to open the dashboard." and leave the cookie alone. This settles phase 3's open question about login length for an account that is both.
 
 ## Versions
 
@@ -533,7 +535,6 @@ Every package added so far matches the major in `00-allowed-apis.md`: drizzle-or
 ## Needs a person
 
 - Sadia's review of the contracts (phase 2).
-- Sadia's decision on login length for an account that is both doctor and admin (phase 3).
 - Putting the doctor screen screenshots beside the prototype's in the pull request (phase 4B).
 - Real-phone checks on an iPhone and an Android phone: install, airplane mode, a session recorded offline and sent the next day (phase 4C).
 - Attaching the printed student report PDF from E2E-D4 to the pull request (phase 4D).

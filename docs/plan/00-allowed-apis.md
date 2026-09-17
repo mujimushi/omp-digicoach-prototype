@@ -208,6 +208,7 @@ Sources: orm.drizzle.team get-started-postgresql, indexes-constraints, insert, t
 - **Decision, 2026-09-17:** Sadia set the minimum to **6 characters** (`LIMITS.passwordMin`), below NIST's 15 for a password that is the only login factor. The other rules stay: the common-password list, the app's name, the username, and the failed-login delays and per-IP limit that slow online guessing.
 - No composition rules: don't demand digits, symbols or capitals.
 - Check new passwords against a list of common passwords (at least 10,000 entries), plus the app's name and the user's own username.
+- **Decision, 2026-09-17:** Sadia removed the common-password list. The app still refuses a password with fewer than three different characters, the app's name or the username.
 - No forced periodic changes. A forced change is right when a password may be known to others, which covers the admin's temporary password.
 - Temporary passwords: four groups of four lower-case letters and digits, leaving out look-alike characters, such as `k7mq-3xrp-9dwt-2hvf`.
 
@@ -228,6 +229,7 @@ These settings are OWASP's recommended Argon2id row. When the username doesn't e
 - Issue a new token at login and at password change. Delete the server-side row at logout, at password reset and when a user is switched off.
 - Switching a user off marks their login rows with `ended_reason = 'switched_off'` instead of deleting them. The next request with that token gets 401 with the reason and deletes the row, so the phone can tell the doctor why. Logout and password reset still delete rows at once. (Phase 4D.)
 - A doctor's login lasts 30 days from last use, and at most 90 days. An admin's lasts 30 minutes from last use, and at most 8 hours.
+- **Decision, 2026-09-17:** doctors shouldn't be logged out on their phones. A doctor's login, including a doctor who is also admin, now has no end date: it lasts while the app is used at least once every 400 days, the longest browsers keep a cookie, and each use sends the cookie again. An admin without the doctor role keeps 30 minutes and 8 hours. The dashboard asks any admin for the password again once 8 hours have passed since it was typed (`DASHBOARD_LOGIN_MAX_MS`); the phone's login carries on. Logout, a password change or reset, and switching a doctor off still end logins.
 
 **Cross-site request forgery** (OWASP CSRF Prevention, custom request headers):
 
