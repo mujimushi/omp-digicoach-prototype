@@ -12,6 +12,8 @@ describe('checkPasswordRules', () => {
     'a quiet river at dawn',
     'fifteen letters',
     'kettle',
+    'coach123',
+    'password1234567',
     'KORMA and naan on tuesdays',
     'x'.repeat(10) + 'yz789',
   ])('accepts %j with no composition rules', (password) => {
@@ -21,9 +23,8 @@ describe('checkPasswordRules', () => {
   it.each([
     ['5 characters', 'ketle', /at least 6/],
     ['129 characters', 'ab'.repeat(64) + 'c', /at most 128/],
-    ['a common password', 'baseball1234567', /too common/],
-    ['a common password with digits added', 'password1234567', /too common/],
-    ['one character repeated', 'aaaaaaaaaaaaaaaa', /too common/],
+    ['one character repeated', 'aaaaaaaaaaaaaaaa', /two different/],
+    ['two characters repeated', 'ababab', /two different/],
     ['the app name', 'OMP DigiCoach 2026!', /app’s name/],
     ['the username', 'dr.sana is my login', /username/],
   ])('refuses %s', (_, password, message) => {

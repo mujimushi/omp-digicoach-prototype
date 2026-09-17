@@ -84,7 +84,7 @@ describe('POST /api/me/password', () => {
 
   it.each([
     ['5 characters', 'ketle'],
-    ['a common password with digits added', 'password1234567'],
+    ['one character repeated', 'aaaaaaaa'],
     ['the username with digits added', 'dr.weakling12345'],
     ['the app name', 'my digicoach password'],
   ])('refuses %s as weak_password', async (_, newPassword) => {

@@ -104,7 +104,7 @@ describe('create doctor', () => {
     const weak = await adminCall('POST', '/api/admin/doctors', {
       ...newDoctor,
       username: 'dr.weak',
-      temporaryPassword: 'password1234567',
+      temporaryPassword: 'dr.weak 2026',
     });
     expect(weak.statusCode).toBe(400);
     expect(weak.json()).toMatchObject({ code: 'weak_password' });
