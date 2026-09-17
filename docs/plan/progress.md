@@ -524,6 +524,16 @@ Ten times the seed data (120 users, 600 students, 4,000 sessions) in a scratch d
 - **No common-password list (2026-09-17).** Sadia asked to remove the 10,000-password list, so "coach123" is accepted. `common-passwords.txt` is deleted. A password still needs more than two different characters and mustn't contain the app's name or the username.
 - **Doctors stay logged in (2026-09-17).** A doctor's login, including a doctor who is also admin, lasts while the app is used at least once every 400 days; each use moves the end forward and sends the cookie again (400 days is the longest browsers keep a cookie). Admin-only accounts keep 30 minutes idle and 8 hours. Sadia chose that a doctor who is also admin stays logged in on the phone, but the dashboard asks for the password again once 8 hours have passed since it was typed: admin routes answer 401 "Log in again to open the dashboard." and leave the cookie alone. This settles phase 3's open question about login length for an account that is both.
 
+## Screen review
+
+Sadia's screen-by-screen review, started 2026-09-17.
+
+**Walkthrough video:** `docs/walkthrough/omp-digicoach-walkthrough.mp4`, 2 min 35 s with no sound, made on 2026-09-17 from the build at `e150544`. Dr. Bilal adds Hira Nadeem and teaches her a full session on a phone, Dr. Junaid teaches her on a second phone and runs into extra time, and Dr. Ayesha opens both sessions on the dashboard. It is a slideshow of Playwright screenshots taken against `npm run dev` on the local database.
+
+| Screen | What's wrong | Fix |
+|---|---|---|
+| 1 Login | A doctor who is also admin opens `/admin` while logged out, logs in, and lands on the phone app at `/` instead of the dashboard. Once logged in, `LoginScreen` renders `<Navigate to={homeFor(user)}>`, which drops the page she came from. Found while making the walkthrough video. | later |
+
 ## Versions
 
 Every package added so far matches the major in `00-allowed-apis.md`: drizzle-orm 0.45.2, drizzle-kit 0.31.10, pg 8.23.0, @types/pg 8.23.1, @node-rs/argon2 2.2.1, msw 2.15.0, zod 4.6.5, @fastify/cookie 11.1.2, @fastify/rate-limit 11.2.0, @fastify/helmet 13.1.1, fastify-type-provider-zod 7.0.0, @testing-library/user-event 14.6.7.
