@@ -205,6 +205,7 @@ Sources: orm.drizzle.team get-started-postgresql, indexes-constraints, insert, t
 **Password rules** (NIST SP 800-63B revision 4, section 3.1.1.2; the password is the only login factor):
 
 - At least **15 characters**; allow at least 64 (the app allows 128).
+- **Decision, 2026-09-17:** Sadia set the minimum to **6 characters** (`LIMITS.passwordMin`), below NIST's 15 for a password that is the only login factor. The other rules stay: the common-password list, the app's name, the username, and the failed-login delays and per-IP limit that slow online guessing.
 - No composition rules: don't demand digits, symbols or capitals.
 - Check new passwords against a list of common passwords (at least 10,000 entries), plus the app's name and the user's own username.
 - No forced periodic changes. A forced change is right when a password may be known to others, which covers the admin's temporary password.

@@ -518,6 +518,10 @@ Ten times the seed data (120 users, 600 students, 4,000 sessions) in a scratch d
 - **Found in the review and left for phase 7:** with `trustProxy: true`, `request.ip` is the left-most `X-Forwarded-For` address, so the per-IP login limit depends on what App Platform's router sends. Without `DATABASE_CA_CERT` the server connects without TLS, which DigitalOcean's database refuses, so it fails closed. Both are noted for phase 7.
 - **Ended and expired login rows stay** until that phone calls again. They hold only a token hash, the user ID and times, and no token in them works. Nothing in the plan asks for a cleanup.
 
+## Decisions after phase 6
+
+- **Password minimum: 6 characters (2026-09-17).** Sadia found 15 too long. `LIMITS.passwordMin` is now 6, used by the server's rules, the shared schemas and the change-password and doctor forms. NIST SP 800-63B-4 asks for 15 when the password is the only login factor; `00-allowed-apis.md` records the difference. The common-password list, app-name and username checks stay, so a word from the list with digits added, such as "coach123", is still refused. `docs/build-plan.md`, `03-login-and-shell.md` and `06-verification.md` still say 15; this decision replaces them.
+
 ## Versions
 
 Every package added so far matches the major in `00-allowed-apis.md`: drizzle-orm 0.45.2, drizzle-kit 0.31.10, pg 8.23.0, @types/pg 8.23.1, @node-rs/argon2 2.2.1, msw 2.15.0, zod 4.6.5, @fastify/cookie 11.1.2, @fastify/rate-limit 11.2.0, @fastify/helmet 13.1.1, fastify-type-provider-zod 7.0.0, @testing-library/user-event 14.6.7.

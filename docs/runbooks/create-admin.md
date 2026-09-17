@@ -20,7 +20,7 @@ The console already has `NODE_ENV=production` and the database settings, so the 
 
 ## How do I hand over the password?
 
-**In person or by phone, never by email or chat.** She logs in at the dashboard address, must choose her own password of at least 15 characters, and the temporary one stops working.
+**In person or by phone, never by email or chat.** She logs in at the dashboard address, must choose her own password of at least 6 characters, and the temporary one stops working.
 
 ## What if the username is taken?
 
