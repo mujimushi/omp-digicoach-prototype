@@ -218,7 +218,7 @@ export const LIMITS = {
   diagnosisMax: 200,
   stepTextMax: 500,
   actionPlanMax: 1000,
-  passwordMin: 15,
+  passwordMin: 6,
   passwordMax: 128,
   appVersionMax: 50,
 } as const;
