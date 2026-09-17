@@ -83,7 +83,7 @@ describe('report speed with ten times the seed data', () => {
   }, 60_000);
 
   it('answers every report route within 500 ms', async () => {
-    const cookies = await loginAs(app(), { id: ids.adminId, isAdmin: true });
+    const cookies = await loginAs(app(), { id: ids.adminId, isDoctor: true });
     const urls = [
       '/api/admin/overview',
       '/api/admin/doctors',

@@ -103,7 +103,7 @@ export async function createUser(
 /** Logs a user in without the login route, and returns cookies for `inject`. */
 export async function loginAs(
   app: FastifyInstance,
-  user: { id: string; isAdmin: boolean },
+  user: { id: string; isDoctor: boolean },
   now: Date = new Date(),
 ): Promise<Record<string, string>> {
   const { token } = await createLoginSession(app.db, user, now);

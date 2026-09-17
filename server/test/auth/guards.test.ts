@@ -158,33 +158,67 @@ describe('login expiry', () => {
     await db.update(loginSessions).set(changes);
   }
 
-  it('refuses a doctor login unused for 31 days, and accepts one used 29 days ago', async () => {
+  const DAY_MS = 86_400_000;
+
+  it('keeps a doctor logged in while used within 400 days, and ends it after 401 unused days', async () => {
     const doctor = await createUser(db);
     const cookies = await loginAs(app(), doctor, clock);
 
-    await ageSession({
-      lastSeenAt: new Date(clock.getTime() - 29 * 86_400_000),
-    });
+    await ageSession({ lastSeenAt: new Date(clock.getTime() - 399 * DAY_MS) });
     expect((await get('/api/me', cookies)).statusCode).toBe(200);
 
-    await ageSession({
-      lastSeenAt: new Date(clock.getTime() - 31 * 86_400_000),
-    });
+    await ageSession({ lastSeenAt: new Date(clock.getTime() - 401 * DAY_MS) });
     expect((await get('/api/me', cookies)).statusCode).toBe(401);
     expect(await db.select().from(loginSessions)).toEqual([]);
   });
 
-  it('refuses a doctor login older than 90 days even when used recently', async () => {
+  it('keeps a doctor logged in two years after login, when the phone is used', async () => {
     const doctor = await createUser(db);
     const cookies = await loginAs(app(), doctor, clock);
-    await ageSession({
-      createdAt: new Date(clock.getTime() - 91 * 86_400_000),
-    });
-    expect((await get('/api/me', cookies)).statusCode).toBe(401);
+    clock = new Date(clock.getTime() + 730 * DAY_MS);
+    await ageSession({ lastSeenAt: new Date(clock.getTime() - 2 * DAY_MS) });
+    // The login's end moved forward with each use; here, as if used two days ago.
+    await db
+      .update(loginSessions)
+      .set({ expiresAt: new Date(clock.getTime() + 398 * DAY_MS) });
+    expect((await get('/api/me', cookies)).statusCode).toBe(200);
   });
 
-  it('refuses an admin login unused for 31 minutes', async () => {
-    const admin = await createUser(db, { isAdmin: true });
+  it('moves a doctor login’s end forward and sends the cookie again, at most once a minute', async () => {
+    const doctor = await createUser(db);
+    const cookies = await loginAs(app(), doctor, clock);
+
+    clock = new Date(clock.getTime() + 30_000);
+    const soon = await get('/api/me', cookies);
+    expect(soon.headers['set-cookie']).toBeUndefined();
+
+    clock = new Date(clock.getTime() + 5 * DAY_MS);
+    const later = await get('/api/me', cookies);
+    expect(String(later.headers['set-cookie'])).toMatch(
+      new RegExp(`^omp_session=${cookies.omp_session};.*Max-Age=34560000`),
+    );
+    const [row] = await db.select().from(loginSessions);
+    expect(row?.expiresAt.getTime()).toBe(clock.getTime() + 400 * DAY_MS);
+  });
+
+  it('still clears the cookie at logout when the login moved forward in the same request', async () => {
+    const doctor = await createUser(db);
+    const cookies = await loginAs(app(), doctor, clock);
+    clock = new Date(clock.getTime() + 2 * DAY_MS);
+    const response = await app().inject({
+      method: 'POST',
+      url: '/api/auth/logout',
+      headers: APP_HEADERS,
+      cookies,
+      payload: {},
+    });
+    expect(response.statusCode).toBe(204);
+    expect(String(response.headers['set-cookie'])).toMatch(/^omp_session=;/);
+    expect(await db.select().from(loginSessions)).toEqual([]);
+  });
+
+  it('refuses an admin-only login unused for 31 minutes', async () => {
+    const admin = await createUser(db, { isAdmin: true, isDoctor: false });
     const cookies = await loginAs(app(), admin, clock);
 
     await ageSession({ lastSeenAt: new Date(clock.getTime() - 29 * 60_000) });
@@ -194,14 +228,39 @@ describe('login expiry', () => {
     expect((await get('/api/me', cookies)).statusCode).toBe(401);
   });
 
-  it('refuses an admin login older than 8 hours even when used recently', async () => {
-    const admin = await createUser(db, { isAdmin: true });
+  it('refuses an admin-only login older than 8 hours even when used recently', async () => {
+    const admin = await createUser(db, { isAdmin: true, isDoctor: false });
     const cookies = await loginAs(app(), admin, clock);
     await ageSession({
       createdAt: new Date(clock.getTime() - SESSION_RULES.admin.maxMs - 1000),
       lastSeenAt: new Date(clock.getTime() - 60_000),
     });
     expect((await get('/api/me', cookies)).statusCode).toBe(401);
+  });
+
+  it('keeps a doctor who is also admin logged in on the phone, but asks for the password again for the dashboard after 8 hours', async () => {
+    const both = await createUser(db, { isAdmin: true, isDoctor: true });
+    const cookies = await loginAs(app(), both, clock);
+
+    clock = new Date(clock.getTime() + 8 * 60 * 60_000 - 60_000);
+    expect((await get('/api/probe/admin', cookies)).statusCode).toBe(200);
+
+    clock = new Date(clock.getTime() + 2 * 60_000);
+    const dashboard = await get('/api/probe/admin', cookies);
+    expect(dashboard.statusCode).toBe(401);
+    expect(dashboard.json()).toMatchObject({
+      code: 'not_logged_in',
+      message: 'Log in again to open the dashboard.',
+    });
+    // The phone's login is untouched.
+    expect(String(dashboard.headers['set-cookie'] ?? '')).not.toMatch(
+      /omp_session=;/,
+    );
+    expect((await get('/api/probe/doctor', cookies)).statusCode).toBe(200);
+    expect((await get('/api/me', cookies)).statusCode).toBe(200);
+
+    const fresh = await loginAs(app(), both, clock);
+    expect((await get('/api/probe/admin', fresh)).statusCode).toBe(200);
   });
 
   it('refreshes last use at most once a minute', async () => {
