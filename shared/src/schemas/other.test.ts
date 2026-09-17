@@ -56,21 +56,21 @@ describe('LoginRequest', () => {
   });
 });
 
-describe('ChangePasswordRequest: 15 to 128 characters, no composition rules', () => {
-  it('accepts 15 lower-case letters and spaces', () => {
+describe('ChangePasswordRequest: 6 to 128 characters, no composition rules', () => {
+  it('accepts 6 lower-case letters', () => {
     expect(
       ChangePasswordRequest.safeParse({
         currentPassword: 'old',
-        newPassword: 'blue tea garden',
+        newPassword: 'kettle',
       }).success,
     ).toBe(true);
   });
 
-  it('refuses 14 characters', () => {
+  it('refuses 5 characters', () => {
     expect(
       ChangePasswordRequest.safeParse({
         currentPassword: 'old',
-        newPassword: 'x'.repeat(14),
+        newPassword: 'x'.repeat(5),
       }).success,
     ).toBe(false);
   });
@@ -166,7 +166,7 @@ describe('DoctorInput', () => {
     ).toBe(true);
   });
 
-  it('refuses a typed temporary password under 15 characters', () => {
+  it('refuses a typed temporary password under 6 characters', () => {
     expect(
       DoctorInput.safeParse({ ...doctor, temporaryPassword: 'short' }).success,
     ).toBe(false);

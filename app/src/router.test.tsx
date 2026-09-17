@@ -151,13 +151,13 @@ describe('login and password change', () => {
     expect(await screen.findByText(/switched off/)).toBeInTheDocument();
   });
 
-  it('explains the 15-character minimum and refuses a short password before sending', async () => {
+  it('explains the 6-character minimum and refuses a short password before sending', async () => {
     const user = userEvent.setup();
     meAnswers({ ...mockData.doctor, mustChangePassword: true });
     open('/change-password');
     expect(
       await screen.findByText(
-        /at least 15 characters\. A phrase of several words/i,
+        /at least 6 characters\. A phrase of several words/i,
       ),
     ).toBeInTheDocument();
 
@@ -165,8 +165,8 @@ describe('login and password change', () => {
       screen.getByLabelText('Temporary password'),
       'k7mq-3xrp-9dwt-2hvf',
     );
-    await user.type(screen.getByLabelText('New password'), 'too short');
-    expect(screen.getByText('Use at least 15 characters.')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('New password'), 'short');
+    expect(screen.getByText('Use at least 6 characters.')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Save new password' }),
     ).toBeDisabled();

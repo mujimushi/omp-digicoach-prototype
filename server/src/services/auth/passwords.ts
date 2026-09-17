@@ -78,8 +78,9 @@ function isCommon(password: string): boolean {
 }
 
 /**
- * NIST SP 800-63B-4 rules for a new password: 15 to 128 characters, not a common password, not the
- * app's name and not the username. No composition rules. Returns the problem, or null.
+ * Rules for a new password: 6 to 128 characters, not a common password, not the app's name and not
+ * the username. No composition rules. NIST SP 800-63B-4 asks for 15 characters; Sadia chose 6 on
+ * 2026-09-17. Returns the problem, or null.
  */
 export function checkPasswordRules(
   password: string,

@@ -83,9 +83,9 @@ describe('POST /api/me/password', () => {
   });
 
   it.each([
-    ['14 characters', 'abcdefghijklmn'],
+    ['5 characters', 'ketle'],
     ['a common password with digits added', 'password1234567'],
-    ['the username padded to 15 characters', 'dr.weakling12345'],
+    ['the username with digits added', 'dr.weakling12345'],
     ['the app name', 'my digicoach password'],
   ])('refuses %s as weak_password', async (_, newPassword) => {
     const user = await createUser(db, { username: 'dr.weakling' });
