@@ -105,6 +105,10 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
+  http.post('*/api/me/tour', ({ request }) => {
+    return guardChange(request) ?? new HttpResponse(null, { status: 204 });
+  }),
+
   http.post('*/api/sync/push', async ({ request }) => {
     const body = await readBody(request, PushEnvelope);
     if ('response' in body) return body.response;
@@ -199,6 +203,7 @@ export const handlers = [
       isAdmin: body.data.isAdmin ?? activity.isAdmin,
       active: body.data.active ?? activity.active,
       mustChangePassword: activity.mustChangePassword,
+      tourCompletedAt: null,
     });
   }),
 

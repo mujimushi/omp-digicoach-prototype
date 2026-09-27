@@ -71,8 +71,9 @@ export async function seedDatabase(
         lastLoginAt: new Date(
           now.getTime() - randomInt(fixtures.rng, 0, 9) * DAY_MS,
         ),
-        // Two doctors haven't changed their temporary password yet.
+        // Two doctors haven't changed their temporary password or seen the app tour yet.
         mustChangePassword: i >= SEED_COUNTS.doctors - 2,
+        tourCompletedAt: i >= SEED_COUNTS.doctors - 2 ? null : createdAt,
       })),
     );
 

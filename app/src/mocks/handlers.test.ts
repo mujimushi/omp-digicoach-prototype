@@ -114,6 +114,16 @@ const cases: Case[] = [
       }),
   },
   {
+    name: 'POST /api/me/tour',
+    valid: () => send('POST', '/api/me/tour', {}),
+    status: 204,
+    invalid: () =>
+      send('POST', '/api/me/tour', {}, {
+        'content-type': 'application/json',
+      } as typeof appHeaders),
+    invalidStatus: 403,
+  },
+  {
     name: 'POST /api/sync/push',
     valid: () =>
       send('POST', '/api/sync/push', {

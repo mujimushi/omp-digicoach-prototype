@@ -51,6 +51,7 @@ export const users = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
     lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
+    tourCompletedAt: timestamp('tour_completed_at', { withTimezone: true }),
   },
   (t) => [uniqueIndex('users_username_unique').on(lower(t.username))],
 );

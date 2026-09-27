@@ -22,6 +22,13 @@
       "when": 1789597667367,
       "tag": "0002_login_session_ended_reason",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790537398119,
+      "tag": "0003_user_tour_completed_at",
+      "breakpoints": true
     }
   ]
 }

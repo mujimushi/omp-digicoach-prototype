@@ -23,10 +23,22 @@ describe('PublicUser', () => {
     isAdmin: false,
     active: true,
     mustChangePassword: true,
+    tourCompletedAt: null,
   };
 
   it('accepts a doctor', () => {
     expect(PublicUser.safeParse(user).success).toBe(true);
+  });
+
+  it('accepts a tour time, and refuses a user without the field', () => {
+    expect(
+      PublicUser.safeParse({
+        ...user,
+        tourCompletedAt: '2026-09-28T08:00:00.000Z',
+      }).success,
+    ).toBe(true);
+    const { tourCompletedAt: _, ...withoutTour } = user;
+    expect(PublicUser.safeParse(withoutTour).success).toBe(false);
   });
 
   it('refuses a password hash field', () => {

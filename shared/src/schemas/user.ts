@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DepartmentKey, DesignationKey, Id } from './common.ts';
+import { DepartmentKey, DesignationKey, Id, IsoDateTime } from './common.ts';
 
 export const PublicUser = z.strictObject({
   id: Id,
@@ -12,5 +12,7 @@ export const PublicUser = z.strictObject({
   isAdmin: z.boolean(),
   active: z.boolean(),
   mustChangePassword: z.boolean(),
+  /** When the doctor finished or skipped the app tour. Null until then. */
+  tourCompletedAt: IsoDateTime.nullable(),
 });
 export type PublicUser = z.infer<typeof PublicUser>;

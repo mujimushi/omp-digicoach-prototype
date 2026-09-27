@@ -92,6 +92,7 @@ export async function createUser(
     .values({
       ...doctor,
       mustChangePassword: false,
+      tourCompletedAt: null,
       ...overrides,
       passwordHash: await knownHash,
     })

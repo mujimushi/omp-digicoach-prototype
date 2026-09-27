@@ -23,6 +23,7 @@ A logged-in user who must change their password gets `403 password_change_requir
 | POST | `/api/auth/logout` | Logged in | none | 204, clears the cookie | none |
 | GET | `/api/me` | Logged in | none | `PublicUser` | 401 `not_logged_in` |
 | POST | `/api/me/password` | Logged in | `ChangePasswordRequest` | 204; issues a new cookie and ends the user's other logins | 400 `weak_password`, 401 `wrong_current_password` |
+| POST | `/api/me/tour` | Logged in | `{}` | 204; sets `tourCompletedAt` the first time and keeps it after that | 401 `not_logged_in` |
 | GET | `/api/health` | Anyone | none | `{ ok: true }` after a database ping | 503 `database_unavailable` |
 
 `invalid_credentials` covers a wrong username, a wrong password and a switched-off account alike, so the message reveals nothing.

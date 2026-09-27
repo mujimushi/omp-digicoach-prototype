@@ -148,3 +148,48 @@ describe('POST /api/me/password', () => {
     expect(relogin.statusCode).toBe(200);
   });
 });
+
+describe('POST /api/me/tour', () => {
+  async function markTour(cookies: Record<string, string>) {
+    return app().inject({
+      method: 'POST',
+      url: '/api/me/tour',
+      headers: APP_HEADERS,
+      cookies,
+      payload: {},
+    });
+  }
+
+  it('returns 401 without a login', async () => {
+    const response = await markTour({});
+    expect(response.statusCode).toBe(401);
+  });
+
+  it('starts as null on /api/me, then keeps the first time it was set', async () => {
+    const user = await createUser(db);
+    const cookies = await loginAs(app(), user);
+    const before = await app().inject({
+      method: 'GET',
+      url: '/api/me',
+      cookies,
+    });
+    expect(before.json()).toMatchObject({ tourCompletedAt: null });
+
+    expect((await markTour(cookies)).statusCode).toBe(204);
+    const [first] = await db.select().from(users).where(eq(users.id, user.id));
+    expect(first?.tourCompletedAt).toBeInstanceOf(Date);
+
+    expect((await markTour(cookies)).statusCode).toBe(204);
+    const [second] = await db.select().from(users).where(eq(users.id, user.id));
+    expect(second?.tourCompletedAt).toEqual(first?.tourCompletedAt);
+
+    const after = await app().inject({
+      method: 'GET',
+      url: '/api/me',
+      cookies,
+    });
+    expect(after.json()).toMatchObject({
+      tourCompletedAt: first?.tourCompletedAt?.toISOString(),
+    });
+  });
+});

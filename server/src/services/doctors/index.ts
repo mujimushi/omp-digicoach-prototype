@@ -63,7 +63,8 @@ function activitySql(where: ReturnType<typeof sql>, now: Date) {
 }
 
 function toActivityRow(row: Record<string, unknown>): DoctorActivityRow {
-  const user = toPublicUser({
+  // The activity row leaves out the tour time.
+  const { tourCompletedAt: _tour, ...user } = toPublicUser({
     id: String(row.id),
     name: String(row.name),
     username: String(row.username),

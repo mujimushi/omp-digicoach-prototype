@@ -25,6 +25,7 @@ export async function loadTenTimesSeed(): Promise<{
   const passwordHash = await hashPassword('ten times the seed data');
   const doctors = Array.from({ length: 120 }, (_, i) => ({
     ...fixtures.makeDoctor(),
+    tourCompletedAt: null,
     passwordHash,
     isAdmin: i === 0,
   }));

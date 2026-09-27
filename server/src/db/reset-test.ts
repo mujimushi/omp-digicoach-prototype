@@ -45,6 +45,8 @@ export async function loadKnownData(
         passwordHash,
         active: true,
         mustChangePassword: false,
+        // Tests of the tour use a doctor the admin adds.
+        tourCompletedAt: now,
       })),
     );
 

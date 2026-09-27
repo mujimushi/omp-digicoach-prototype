@@ -215,6 +215,7 @@ export function createFixtures(seed = 1) {
       isAdmin: false,
       active: true,
       mustChangePassword: false,
+      tourCompletedAt: null,
       ...overrides,
     };
   }

@@ -17,6 +17,7 @@ export function toPublicUser(user: UserRow): PublicUser {
     isAdmin: user.isAdmin,
     active: user.active,
     mustChangePassword: user.mustChangePassword,
+    tourCompletedAt: user.tourCompletedAt?.toISOString() ?? null,
   };
 }
 

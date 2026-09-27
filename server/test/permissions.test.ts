@@ -15,6 +15,7 @@ const ROUTES: Record<string, Access> = {
   'POST /api/auth/logout': 'logout',
   'GET /api/me': 'logged in',
   'POST /api/me/password': 'logged in',
+  'POST /api/me/tour': 'logged in',
   'GET /api/health': 'anyone',
   'POST /api/sync/push': 'doctor',
   'GET /api/sync/pull': 'doctor',

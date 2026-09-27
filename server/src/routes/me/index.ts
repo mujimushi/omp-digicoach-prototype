@@ -1,5 +1,5 @@
 import { ChangePasswordRequest, PublicUser } from '@omp/shared';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { users } from '../../db/schema.ts';
@@ -28,6 +28,17 @@ export async function meRoutes(api: FastifyInstance) {
       return toPublicUser(user);
     },
   );
+
+  // Keeps the first time: replaying the tour from More doesn't move it.
+  routes.post('/tour', async (request, reply) => {
+    const user = request.user;
+    if (!user) throw new Error('requireLogin let a request through');
+    await api.db
+      .update(users)
+      .set({ tourCompletedAt: api.now() })
+      .where(and(eq(users.id, user.id), isNull(users.tourCompletedAt)));
+    return reply.code(204).send();
+  });
 
   routes.post(
     '/password',

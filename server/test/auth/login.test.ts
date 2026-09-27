@@ -54,6 +54,7 @@ describe('POST /api/auth/login', () => {
       isAdmin: false,
       active: true,
       mustChangePassword: false,
+      tourCompletedAt: null,
     });
     const cookie = String(response.headers['set-cookie']);
     expect(cookie).toMatch(/^omp_session=[A-Za-z0-9_-]{43};/);

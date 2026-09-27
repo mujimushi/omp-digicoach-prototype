@@ -71,7 +71,9 @@ describe('migrations on an empty database', () => {
 
   it('accepts one row in every table', async () => {
     const { db } = database;
-    await db.insert(users).values({ ...doctor, passwordHash: 'hash' });
+    await db
+      .insert(users)
+      .values({ ...doctor, tourCompletedAt: null, passwordHash: 'hash' });
     await db.insert(loginSessions).values({
       id: 'sha256-of-token',
       userId: doctor.id,
@@ -241,6 +243,7 @@ describe('migrations on an empty database', () => {
       () =>
         database.db.insert(users).values({
           ...fixtures.makeDoctor(),
+          tourCompletedAt: null,
           username: doctor.username.toUpperCase(),
           passwordHash: 'hash',
         }),
