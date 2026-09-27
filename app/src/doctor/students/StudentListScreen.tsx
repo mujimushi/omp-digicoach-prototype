@@ -28,6 +28,7 @@ function StudentRow({ student }: { student: Student }) {
         type="button"
         onClick={() => navigate(`/session/setup?student=${student.id}`)}
         aria-label={`Teach ${student.name}`}
+        data-tour="student"
         style={{
           flex: 1,
           minWidth: 0,

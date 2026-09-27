@@ -1,6 +1,7 @@
 import {
   BookOpen,
   ChevronRight,
+  Compass,
   LogOut,
   type LucideIcon,
   Star,
@@ -12,6 +13,7 @@ import { useAuth, useUser } from '../../auth/AuthProvider.tsx';
 import { InstallGuide } from '../../install/InstallGuide.tsx';
 import { useSyncStatus } from '../../offline/useSyncStatus.ts';
 import { ds } from '../../styles/tokens.ts';
+import { useTour } from '../../tour/useTour.ts';
 import { Button } from '../../ui/Button.tsx';
 import { Card } from '../../ui/Card.tsx';
 import { ConfirmDialog } from '../../ui/ConfirmDialog.tsx';
@@ -19,6 +21,44 @@ import { IconCircle } from '../../ui/IconCircle.tsx';
 import { ScreenHeader } from '../components/ScreenHeader.tsx';
 import { APP_VERSION } from '../session/draft.ts';
 import { useRepositoryQuery } from '../useRepositoryQuery.ts';
+
+type MenuRowProps = {
+  label: string;
+  detail: string;
+  Icon: LucideIcon;
+  colour: string;
+};
+
+function MenuRowContent({ label, detail, Icon, colour }: MenuRowProps) {
+  return (
+    <>
+      <IconCircle Icon={Icon} color={colour} />
+      <span style={{ flex: 1 }}>
+        <span
+          style={{
+            display: 'block',
+            fontSize: 15,
+            fontWeight: 700,
+            color: ds.tx,
+          }}
+        >
+          {label}
+        </span>
+        <span
+          style={{
+            display: 'block',
+            fontSize: 13,
+            color: ds.txB,
+            marginTop: 2,
+          }}
+        >
+          {detail}
+        </span>
+      </span>
+      <ChevronRight size={16} color={ds.txL} />
+    </>
+  );
+}
 
 function MenuLink({
   to,
@@ -46,31 +86,54 @@ function MenuLink({
           textDecoration: 'none',
         }}
       >
-        <IconCircle Icon={Icon} color={colour} />
-        <span style={{ flex: 1 }}>
-          <span
-            style={{
-              display: 'block',
-              fontSize: 15,
-              fontWeight: 700,
-              color: ds.tx,
-            }}
-          >
-            {label}
-          </span>
-          <span
-            style={{
-              display: 'block',
-              fontSize: 13,
-              color: ds.txB,
-              marginTop: 2,
-            }}
-          >
-            {detail}
-          </span>
-        </span>
-        <ChevronRight size={16} color={ds.txL} />
+        <MenuRowContent
+          label={label}
+          detail={detail}
+          Icon={Icon}
+          colour={colour}
+        />
       </Link>
+    </li>
+  );
+}
+
+function MenuItem({
+  onClick,
+  label,
+  detail,
+  Icon,
+  colour,
+}: {
+  onClick: () => void;
+  label: string;
+  detail: string;
+  Icon: LucideIcon;
+  colour: string;
+}) {
+  return (
+    <li style={{ marginBottom: 8 }}>
+      <button
+        type="button"
+        onClick={onClick}
+        style={{
+          ...ds.card,
+          width: '100%',
+          border: 'none',
+          padding: 16,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14,
+          textAlign: 'left',
+          cursor: 'pointer',
+        }}
+      >
+        <MenuRowContent
+          label={label}
+          detail={detail}
+          Icon={Icon}
+          colour={colour}
+        />
+      </button>
     </li>
   );
 }
@@ -85,6 +148,7 @@ export function MoreScreen() {
   const problems = attention.data ?? [];
   const { waiting } = useSyncStatus();
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const tour = useTour();
 
   return (
     <>
@@ -141,6 +205,15 @@ export function MoreScreen() {
             Icon={BookOpen}
             colour={ds.pri}
           />
+          {tour.available && (
+            <MenuItem
+              onClick={tour.startTour}
+              label="App tour"
+              detail="A short guided practice session"
+              Icon={Compass}
+              colour={ds.teal}
+            />
+          )}
         </ul>
         <Button
           variant="secondary"

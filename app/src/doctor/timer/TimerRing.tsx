@@ -53,6 +53,7 @@ export function TimerRing({
     <button
       type="button"
       onClick={onToggle}
+      data-tour="timer"
       aria-label={spoken}
       aria-pressed={reading.isPaused}
       aria-describedby="timer-hint"

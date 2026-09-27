@@ -66,7 +66,7 @@ function PromptCard({
 export function StepRating({ draft, update }: StepProps) {
   const index = draft.timer.currentStep - 1;
   return (
-    <Card padding={14} style={{ marginTop: 10 }}>
+    <Card padding={14} style={{ marginTop: 10 }} data-tour="rating">
       <div
         style={{ fontSize: 14, fontWeight: 700, color: ds.tx, marginBottom: 4 }}
       >

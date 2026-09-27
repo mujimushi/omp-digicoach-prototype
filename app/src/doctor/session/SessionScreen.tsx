@@ -238,6 +238,7 @@ export function SessionScreen() {
           <button
             type="button"
             onClick={() => move((step + 1) as StepId)}
+            data-tour="next"
             style={{ ...ds.btnPri, flex: 3, minHeight: 48, fontSize: 15 }}
           >
             Next step
@@ -246,6 +247,7 @@ export function SessionScreen() {
           <button
             type="button"
             onClick={() => void onFinish()}
+            data-tour="finish"
             style={{
               ...ds.btnPri,
               flex: 3,

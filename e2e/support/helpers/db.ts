@@ -7,11 +7,18 @@ const repoRoot = fileURLToPath(new URL('../../..', import.meta.url));
 
 /** Empties the end-to-end database and reloads the known data, through the command line. */
 export function resetDatabase(): void {
-  execFileSync('npm', ['run', '--silent', 'db:reset-test', '-w', 'server'], {
-    cwd: repoRoot,
-    env: { ...process.env, ...TEST_SERVER_ENV },
-    stdio: 'pipe',
-  });
+  // Windows runs npm through its .cmd file, which needs a shell.
+  const windows = process.platform === 'win32';
+  execFileSync(
+    windows ? 'npm.cmd' : 'npm',
+    ['run', '--silent', 'db:reset-test', '-w', 'server'],
+    {
+      cwd: repoRoot,
+      env: { ...process.env, ...TEST_SERVER_ENV },
+      stdio: 'pipe',
+      shell: windows,
+    },
+  );
 }
 
 /** Runs a read-only query against the end-to-end database, to check results. */

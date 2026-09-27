@@ -62,8 +62,8 @@ export function RepositoryProvider({
   repository,
 }: {
   children: ReactNode;
-  /** Tests pass their own repository. */
-  repository?: Repository;
+  /** Tests pass their own repository, and the app tour its practice one. */
+  repository?: Repository | undefined;
 }) {
   const userId = useUser().id;
   const [version, setVersion] = useState(0);

@@ -40,6 +40,8 @@ export type MetaValues = {
   user: PublicUser;
   lastSyncAt: string;
   installGuideDismissedAt: string;
+  /** When this phone finished or skipped the app tour, in case the server hasn't heard yet. */
+  tourDoneAt: string;
 };
 export type MetaKey = keyof MetaValues;
 export type MetaRow = { key: MetaKey; value: MetaValues[MetaKey] };

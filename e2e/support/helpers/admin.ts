@@ -32,11 +32,16 @@ export async function addDoctorInDashboard(
 }
 
 /** Logs in on the phone and chooses a new password. */
+/**
+ * Logs a new doctor in with the temporary password and sets a new one. The app tour then opens;
+ * `tour: 'skip'` skips it, `tour: 'leave'` leaves it open for the test.
+ */
 export async function firstLoginOnPhone(
   phone: Page,
   username: string,
   temporaryPassword: string,
   newPassword: string,
+  { tour = 'skip' }: { tour?: 'skip' | 'leave' } = {},
 ) {
   await phone.goto('/');
   await phone.getByLabel('Username').fill(username);
@@ -49,4 +54,12 @@ export async function firstLoginOnPhone(
   await phone.getByLabel('New password', { exact: true }).fill(newPassword);
   await phone.getByLabel('New password again').fill(newPassword);
   await phone.getByRole('button', { name: 'Save new password' }).click();
+  const welcome = phone.getByRole('dialog', {
+    name: 'Welcome to OMP DigiCoach',
+  });
+  await expect(welcome).toBeVisible();
+  if (tour === 'skip') {
+    await welcome.getByRole('button', { name: 'Skip' }).click();
+    await expect(welcome).toBeHidden();
+  }
 }

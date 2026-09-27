@@ -147,18 +147,21 @@ export function SessionSetupScreen() {
               Case type
             </div>
           </div>
-          <ChipGroup<CaseType>
-            label="Case type"
-            options={CASE_OPTIONS}
-            value={caseType}
-            color={ds.goldFill}
-            onChange={setCaseType}
-          />
+          <div data-tour="case-type">
+            <ChipGroup<CaseType>
+              label="Case type"
+              options={CASE_OPTIONS}
+              value={caseType}
+              color={ds.goldFill}
+              onChange={setCaseType}
+            />
+          </div>
         </Card>
         <button
           type="button"
           onClick={onStart}
           disabled={!learner || !caseType || starting}
+          data-tour="start"
           style={{
             ...ds.btnPri,
             width: '100%',

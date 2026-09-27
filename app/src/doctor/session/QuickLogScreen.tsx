@@ -4,6 +4,7 @@ import { useId, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router';
 import { useRepository } from '../../data/RepositoryProvider.tsx';
 import { ds } from '../../styles/tokens.ts';
+import { useTour } from '../../tour/useTour.ts';
 import { Card } from '../../ui/Card.tsx';
 import { useToast } from '../../ui/Toast.tsx';
 import { ScreenHeader } from '../components/ScreenHeader.tsx';
@@ -20,6 +21,7 @@ export function QuickLogScreen() {
   const repository = useRepository();
   const navigate = useNavigate();
   const toast = useToast();
+  const { practice } = useTour();
   const { draft, update } = useSessionDraft();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,10 +51,11 @@ export function QuickLogScreen() {
       await repository.completeSession(
         buildSession(draft, Date.now(), { skipLog }),
       );
-      // Only now, after the phone has stored it.
-      toast('Session saved', {
-        detail: 'It will be sent when there is signal.',
-      });
+      // Only now, after the phone has stored it. A practice session isn't stored at all.
+      if (!practice)
+        toast('Session saved', {
+          detail: 'It will be sent when there is signal.',
+        });
       navigate('/', { replace: true });
     } catch {
       setError('The session was not saved. Try again.');
@@ -264,6 +267,7 @@ export function QuickLogScreen() {
           type="button"
           disabled={saving}
           onClick={() => void complete(false)}
+          data-tour="log-save"
           style={{
             ...ds.btnPri,
             flex: 2,
