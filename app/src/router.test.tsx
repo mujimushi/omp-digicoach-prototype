@@ -5,9 +5,26 @@ import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
 import { createMemoryRouter } from 'react-router';
 import { RouterProvider } from 'react-router/dom';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import { mockData } from './mocks/data.ts';
 import { routes } from './router.tsx';
+
+// The PWA plugin's virtual module doesn't load on Windows; these tests need no update anyway.
+vi.mock('virtual:pwa-register/react', () => ({
+  useRegisterSW: () => ({
+    needRefresh: [false, vi.fn()],
+    offlineReady: [false, vi.fn()],
+    updateServiceWorker: vi.fn(async () => undefined),
+  }),
+}));
 
 const server = setupServer();
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
@@ -55,8 +72,13 @@ describe('route guards', () => {
         mustChangePassword: true,
       });
       const router = open(path);
+      // The first visit to /admin loads the dashboard's lazy module, which can outlast the default 1 s.
       expect(
-        await screen.findByRole('heading', { name: 'Choose your password' }),
+        await screen.findByRole(
+          'heading',
+          { name: 'Choose your password' },
+          { timeout: 5000 },
+        ),
       ).toBeInTheDocument();
       expect(router.state.location.pathname).toBe('/change-password');
     },
