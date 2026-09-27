@@ -22,7 +22,7 @@ export function QuickLogScreen() {
   const navigate = useNavigate();
   const toast = useToast();
   const { practice } = useTour();
-  const { draft, update } = useSessionDraft();
+  const { draft, update, pauseSaving } = useSessionDraft();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const diagnosisId = useId();
@@ -47,6 +47,8 @@ export function QuickLogScreen() {
     if (!draft) return;
     setSaving(true);
     setError(null);
+    // A draft save still waiting would otherwise store the draft again after the session.
+    pauseSaving(true);
     try {
       await repository.completeSession(
         buildSession(draft, Date.now(), { skipLog }),
@@ -58,6 +60,7 @@ export function QuickLogScreen() {
         });
       navigate('/', { replace: true });
     } catch {
+      pauseSaving(false);
       setError('The session was not saved. Try again.');
       setSaving(false);
     }

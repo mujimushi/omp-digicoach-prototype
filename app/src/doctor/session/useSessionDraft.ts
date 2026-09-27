@@ -17,6 +17,8 @@ export function useSessionDraft() {
   );
   const latest = useRef<SessionDraft | null | undefined>(undefined);
   latest.current = draft;
+  // Set while the finished session is being stored, so a late save can't bring the draft back.
+  const paused = useRef(false);
 
   useEffect(() => {
     let current = true;
@@ -31,7 +33,7 @@ export function useSessionDraft() {
   const saveNow = useCallback(
     async (next?: SessionDraft) => {
       const toSave = next ?? latest.current;
-      if (!toSave) return;
+      if (!toSave || paused.current) return;
       await repository.saveDraft({ ...toSave, savedAtMs: Date.now() });
     },
     [repository],
@@ -68,5 +70,10 @@ export function useSessionDraft() {
     [],
   );
 
-  return { draft, update, saveNow, setDraft };
+  /** Stops saving the draft, or starts again after a failed attempt to store the session. */
+  const pauseSaving = useCallback((pause: boolean) => {
+    paused.current = pause;
+  }, []);
+
+  return { draft, update, saveNow, setDraft, pauseSaving };
 }

@@ -324,6 +324,31 @@ describe('quick log', () => {
     expect(await repository.loadDraft()).toBeUndefined();
   });
 
+  it('a draft save still waiting when Save is tapped doesn’t bring the draft back', async () => {
+    const user = userEvent.setup();
+    const { repository } = await atLog();
+    // A slow phone: the session is stored, but the answer arrives after the 300 ms draft save.
+    const store = repository.completeSession.bind(repository);
+    vi.spyOn(repository, 'completeSession').mockImplementation(
+      async (session) => {
+        await store(session);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      },
+    );
+    const { router } = renderDoctorApp({
+      path: '/session/log',
+      repository,
+      user: doctor,
+    });
+
+    await user.type(await screen.findByLabelText('Diagnosis'), 'Pneumonia');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/'));
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(await repository.loadDraft()).toBeUndefined();
+  });
+
   it('Skip saves the session without the log fields', async () => {
     const user = userEvent.setup();
     const { repository } = await atLog();
