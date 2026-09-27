@@ -32,6 +32,7 @@ Where things are, for the next session:
 | 4E Quality and deploy prep | Done | `phase-4e-v1` |
 | 5 Integration and hardening | Done, except the person checks | `rc-1` |
 | 6 Verification gate | Done, except the person checks | `phase-6-v1` |
+| 9 App tour | Done, on branch `feature/app-tour`; awaiting Sadia's review | none yet |
 
 ## Phase 2: Contracts
 
@@ -523,6 +524,30 @@ Ten times the seed data (120 users, 600 students, 4,000 sessions) in a scratch d
 - **Password minimum: 6 characters (2026-09-17).** Sadia found 15 too long. `LIMITS.passwordMin` is now 6, used by the server's rules, the shared schemas and the change-password and doctor forms. NIST SP 800-63B-4 asks for 15 when the password is the only login factor; `00-allowed-apis.md` records the difference. `docs/build-plan.md`, `03-login-and-shell.md` and `06-verification.md` still say 15; this decision replaces them.
 - **No common-password list (2026-09-17).** Sadia asked to remove the 10,000-password list, so "coach123" is accepted. `common-passwords.txt` is deleted. A password still needs more than two different characters and mustn't contain the app's name or the username.
 - **Doctors stay logged in (2026-09-17).** A doctor's login, including a doctor who is also admin, lasts while the app is used at least once every 400 days; each use moves the end forward and sends the cookie again (400 days is the longest browsers keep a cookie). Admin-only accounts keep 30 minutes idle and 8 hours. Sadia chose that a doctor who is also admin stays logged in on the phone, but the dashboard asks for the password again once 8 hours have passed since it was typed: admin routes answer 401 "Log in again to open the dashboard." and leave the cookie alone. This settles phase 3's open question about login length for an account that is both.
+
+## Phase 9: App tour
+
+Asked for by the client on 2026-09-28: new doctors should learn the app before their first real session. Sadia decided: no approval needed for the text, the tour can be skipped, no tour for the admin, English only, and the text stays short.
+
+### Checklist
+
+- [x] Server: `POST /api/me/tour` sets `tourCompletedAt` once; repeats keep the first time; 401 without a login. `/api/me` returns the field. The route is in `api.md` and the permission list.
+- [x] Migration `0003_user_tour_completed_at` adds a nullable column, so existing doctors see the tour once after the release.
+- [x] Component tests (`app/src/tour/tour.test.tsx`): the tour opens for a new doctor and not for one who has seen it; `undefined` never opens it; Skip remembers it once; More → App tour replays it; the whole practice run shows each hint and ends with "You’re ready", leaving the real repository without a session, a draft or an outbox item.
+- [x] E2E-19 passes on phone Chromium, phone WebKit and desktop Chromium: a new doctor runs the tour and practice session; afterwards the phone's outbox is empty, the server has no session for the doctor, `tour_completed_at` is set, and neither a reload nor a second phone shows the tour.
+- [x] `firstLoginOnPhone` now skips the tour (or leaves it open with `tour: 'leave'`), so E2E-01, E2E-10, E2E-11 and E2E-D2 pass unchanged otherwise.
+- [x] The doctor entry is 189.7 KB gzipped, under the 250 KB budget.
+
+### Choices the plan didn't make
+
+- **Practice runs on its own repository** (`app/src/tour/practice-repository.ts`), not the memory repository, which stays test-only and out of the app build. It queues nothing and reports zero waiting items.
+- **The tour lives in the doctor layout**: `TourProvider` wraps `RepositoryProvider`, which takes the practice repository while practice runs. Real drafts, students and sessions stay untouched in IndexedDB; a real session in progress reappears after practice.
+- **Hints don't block the screen.** A ring marks the control and one line sits above or below it. The first unfinished hint whose `data-tour` target is on screen shows, so moving ahead skips hints behind.
+- **"Session saved" doesn't show after a practice session**, since nothing was saved.
+- **The phone remembers the tour in Dexie's `meta` table (`tourDoneAt`)** before telling the server, so an offline doctor isn't shown it again; the next start with a login tells the server again.
+- **Seeded doctors have seen the tour**, except the two who must still change their password. Known end-to-end users have seen it too.
+- **The admin's doctor list leaves out the tour time**; `DoctorActivityRow` is unchanged.
+- **`resetDatabase()` in the E2E helpers runs `npm.cmd` through a shell on Windows**, so the suite runs on a Windows machine.
 
 ## Screen review
 

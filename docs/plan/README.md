@@ -35,6 +35,7 @@ This folder turns `docs/build-plan.md` into build phases. Each phase file stands
 | 6 Verification gate | `06-verification.md` | In order | 2 days |
 | 7 Deploy | `07-deploy.md` | In order; needs the DigitalOcean account | 2–3 days |
 | 8 Pilot and launch | `08-pilot-launch.md` | In order | 2–3 weeks elapsed |
+| 9 App tour | `09-app-tour.md` | Added after phase 6, at the client's request | 3–4 days |
 
 Sizes are working days for one builder working with AI agents, including tests. They are estimates to compare schedules, not promises.
 
