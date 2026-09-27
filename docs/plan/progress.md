@@ -557,7 +557,7 @@ Sadia's screen-by-screen review, started 2026-09-17.
 
 | Screen | What's wrong | Fix |
 |---|---|---|
-| 1 Login | A doctor who is also admin opens `/admin` while logged out, logs in, and lands on the phone app at `/` instead of the dashboard. Once logged in, `LoginScreen` renders `<Navigate to={homeFor(user)}>`, which drops the page she came from. Found while making the walkthrough video. | later |
+| 1 Login | A doctor who is also admin opens `/admin` while logged out, logs in, and lands on the phone app at `/` instead of the dashboard. Once logged in, `LoginScreen` renders `<Navigate to={homeFor(user)}>`, which drops the page she came from. Found while making the walkthrough video. | Won't fix (2026-09-28): doctors and admins will use separate logins, so no one lands in the wrong area. |
 
 ## Versions
 
