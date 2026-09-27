@@ -65,22 +65,28 @@ describe('IconCircle', () => {
 });
 
 describe('ChipLabel', () => {
-  it('stacks an invisible bold copy under the visible label, so width never changes', () => {
+  it('stacks invisible bold and regular copies under the visible label, so width never changes', () => {
     const { container, rerender } = render(
       <ChipLabel on={false}>Long Case</ChipLabel>,
     );
-    const sizer = container.querySelector<HTMLElement>(
-      '[data-chip-layer="sizer"]',
-    );
+    const sizers = [
+      ...container.querySelectorAll<HTMLElement>('[data-chip-layer="sizer"]'),
+    ];
     const visible = container.querySelector<HTMLElement>(
       '[data-chip-layer="visible"]',
     );
 
-    expect(sizer?.style.visibility).toBe('hidden');
-    expect(sizer?.style.fontWeight).toBe('600');
-    expect(sizer).toHaveAttribute('aria-hidden', 'true');
+    // Bold is narrower than regular in some fonts, so both weights reserve room.
+    expect(sizers.map((sizer) => sizer.style.fontWeight)).toEqual([
+      '600',
+      '400',
+    ]);
+    for (const sizer of sizers) {
+      expect(sizer.style.visibility).toBe('hidden');
+      expect(sizer).toHaveAttribute('aria-hidden', 'true');
+      expect(sizer.style.gridArea).toBe(visible?.style.gridArea);
+    }
     expect(visible?.style.fontWeight).toBe('400');
-    expect(sizer?.style.gridArea).toBe(visible?.style.gridArea);
 
     rerender(<ChipLabel on>Long Case</ChipLabel>);
     expect(
