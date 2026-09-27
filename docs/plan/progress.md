@@ -1,10 +1,10 @@
 # Build progress
 
-Branch `build-v1`, one pull request into `main` at the end. Each phase's last commit carries its tag.
+One branch, `main`, since 2026-09-28. `build-v1` was fast-forwarded into `main` and deleted, so the tags below are all on `main`. Each phase's last commit carries its tag.
 
 ## Resume here
 
-**Phases 2 to 6 are done**, apart from the checks under Needs a person. Next: the pull request from `build-v1` into `main`, Sadia's reviews and Prof. Muneeza's walkthrough, then phase 7 once the DigitalOcean account exists. The optional stop after phase 2 was skipped: Sadia asked for no review stops.
+**Phases 2 to 6 and phase 9 (app tour) are done**, apart from the checks under Needs a person, and all of it is on `main`. Next: Sadia's screen review and Prof. Muneeza's walkthrough, then phase 7 once the DigitalOcean account exists. The optional stop after phase 2 was skipped: Sadia asked for no review stops.
 
 Where things are, for the next session:
 
@@ -18,7 +18,7 @@ Where things are, for the next session:
 - **Offline:** `getPhoneDb()` in `app/src/offline/db.ts`; the sync engine in `sync.ts` runs inside `SyncProvider` in the doctor layout; `phone-auth.ts` keeps the last user and blocks a second user while items wait. `server/test/integration/phone-sync.test.ts` runs the engine against the real routes and has its own tsconfig with the DOM library.
 - **End-to-end:** `npm run start:test` builds, resets `omp_e2e` and starts the server in test mode. `e2e/support/fixtures.ts` gives `doctorPage`, `secondDoctorPage` and `adminPage`, `contextFor()` for more phones, and resets the database before each file; `e2e/support/helpers/` holds `db.ts`, `axe.ts`, `layout.ts`, `doctor.ts`, `admin.ts` and `people.ts` (`adminAtDesk`, `emptyPhone`). The joined suite is `e2e/tests/integration/01…17`. `expectAllSent()` waits for the phone's outbox to empty; call it after the saved message shows. Run with `npm run test:e2e`, which sets `NODE_OPTIONS=--conditions=development` so Playwright reads `@omp/shared` source.
 - **This Mac:** start every shell command with `eval "$(fnm env)" && fnm use 22`. PostgreSQL on 5434 (`npm run db:up`), server on 3000, Vite on 5180. Run `npx biome check --write .` before committing.
-- **Git:** commits authored by Sadia with no Co-Authored-By line; push only `build-v1` and tags to `origin`.
+- **Git:** commits authored by Sadia with no Co-Authored-By line; work on `main` and push it and tags to `origin` (`mujimushi/omp-digicoach-prototype`).
 
 | Phase | Status | Tag |
 |---|---|---|
@@ -32,7 +32,7 @@ Where things are, for the next session:
 | 4E Quality and deploy prep | Done | `phase-4e-v1` |
 | 5 Integration and hardening | Done, except the person checks | `rc-1` |
 | 6 Verification gate | Done, except the person checks | `phase-6-v1` |
-| 9 App tour | Done, on branch `feature/app-tour`; awaiting Sadia's review | none yet |
+| 9 App tour | Done, on `main` | none yet |
 
 ## Phase 2: Contracts
 
