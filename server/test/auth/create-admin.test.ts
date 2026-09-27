@@ -15,9 +15,6 @@ describe('create-admin', () => {
     const { user, temporaryPassword } = await createAdmin(db, {
       name: 'Prof. Admin',
       username: 'Prof.Admin',
-      doctor: false,
-      department: null,
-      designation: null,
     });
 
     expect(user).toMatchObject({
@@ -46,28 +43,10 @@ describe('create-admin', () => {
     expect(login.json()).toMatchObject({ mustChangePassword: true });
   });
 
-  it('can make an admin who also teaches', async () => {
-    const { user } = await createAdmin(db, {
-      name: 'Prof. Teacher',
-      username: 'prof.teacher',
-      doctor: true,
-      department: 'medicine',
-      designation: 'professor',
-    });
-    expect(user).toMatchObject({
-      isAdmin: true,
-      isDoctor: true,
-      department: 'medicine',
-    });
-  });
-
   it('refuses a taken username in any letter case', async () => {
     const args = {
       name: 'Prof. Admin',
       username: 'prof.admin',
-      doctor: false,
-      department: null,
-      designation: null,
     };
     await createAdmin(db, args);
     await expect(

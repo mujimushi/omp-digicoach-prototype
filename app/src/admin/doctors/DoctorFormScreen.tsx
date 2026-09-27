@@ -69,16 +69,20 @@ function Select<T extends string>({
   );
 }
 
-function Checkbox({
+type Role = 'doctor' | 'admin';
+
+function RoleOption({
+  name,
   label,
   checked,
   onChange,
   disabled,
 }: {
+  name: string;
   label: string;
   checked: boolean;
-  onChange: (v: boolean) => void;
-  disabled?: boolean;
+  onChange: () => void;
+  disabled: boolean;
 }) {
   return (
     <label
@@ -92,10 +96,11 @@ function Checkbox({
       }}
     >
       <input
-        type="checkbox"
+        type="radio"
+        name={name}
         checked={checked}
         disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
+        onChange={onChange}
         style={{ width: 18, height: 18 }}
       />
       {label}
@@ -109,7 +114,10 @@ function messageOf(error: unknown): string {
     : 'The doctor was not saved. Try again.';
 }
 
-/** Add a doctor, or edit one: name, username, department, designation, roles, switch on or off, reset password. */
+/**
+ * Add a doctor, or edit one: name, username, department, designation, role, switch on or off, reset
+ * password. An account is a doctor or an admin, never both: they log in separately.
+ */
 export function DoctorFormScreen() {
   const { id } = useParams();
   const editing = id !== undefined;
@@ -126,8 +134,8 @@ export function DoctorFormScreen() {
   const [username, setUsername] = useState('');
   const [department, setDepartment] = useState<Department | ''>('');
   const [designation, setDesignation] = useState<Designation | ''>('');
-  const [isDoctor, setIsDoctor] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [role, setRole] = useState<Role>('doctor');
+  const roleName = useId();
   const [temporaryPassword, setTemporaryPassword] = useState('');
   const [touched, setTouched] = useState(false);
   const [shown, setShown] = useState<{
@@ -143,8 +151,7 @@ export function DoctorFormScreen() {
     setUsername(activity.username);
     setDepartment(activity.department ?? '');
     setDesignation(activity.designation ?? '');
-    setIsDoctor(activity.isDoctor);
-    setIsAdmin(activity.isAdmin);
+    setRole(activity.isAdmin ? 'admin' : 'doctor');
   }, [activity]);
 
   const invalidate = () =>
@@ -173,13 +180,15 @@ export function DoctorFormScreen() {
       setShown({ username, password: result.temporaryPassword }),
   });
 
+  const isDoctor = role === 'doctor';
   const input = {
     name,
     username,
-    department: department === '' ? null : department,
-    designation: designation === '' ? null : designation,
+    // An admin doesn't teach, so has no department or designation.
+    department: isDoctor && department !== '' ? department : null,
+    designation: isDoctor && designation !== '' ? designation : null,
     isDoctor,
-    isAdmin,
+    isAdmin: !isDoctor,
     ...(temporaryPassword ? { temporaryPassword } : {}),
   };
   const check = DoctorInput.safeParse(input);
@@ -190,7 +199,6 @@ export function DoctorFormScreen() {
       errors[field] ??= issue.message;
     }
   }
-  if (!isDoctor && !isAdmin) errors.role = 'Choose doctor, admin or both.';
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -257,28 +265,6 @@ export function DoctorFormScreen() {
             error={touched ? (errors.username ?? null) : null}
             required
           />
-          <Select
-            label="Department"
-            value={department}
-            options={DEPARTMENTS}
-            labels={DEPARTMENT_LABELS}
-            onChange={setDepartment}
-          />
-          <Select
-            label="Designation"
-            value={designation}
-            options={DESIGNATIONS}
-            labels={DESIGNATION_LABELS}
-            onChange={setDesignation}
-          />
-          {touched && errors.department && (
-            <p
-              role="alert"
-              style={{ color: ds.redText, fontSize: 13, marginTop: -6 }}
-            >
-              {errors.department}
-            </p>
-          )}
           <fieldset style={{ border: 0, padding: 0, margin: '0 0 8px' }}>
             <legend
               style={{
@@ -290,16 +276,19 @@ export function DoctorFormScreen() {
             >
               Role
             </legend>
-            <Checkbox
+            <RoleOption
+              name={roleName}
               label="Doctor: uses the phone app"
               checked={isDoctor}
-              onChange={setIsDoctor}
+              onChange={() => setRole('doctor')}
+              disabled={self}
             />
-            <Checkbox
+            <RoleOption
+              name={roleName}
               label="Admin: uses this dashboard"
-              checked={isAdmin}
-              onChange={setIsAdmin}
-              disabled={self && isAdmin}
+              checked={!isDoctor}
+              onChange={() => setRole('admin')}
+              disabled={self}
             />
             {touched && errors.role && (
               <p role="alert" style={{ color: ds.redText, fontSize: 13 }}>
@@ -307,6 +296,32 @@ export function DoctorFormScreen() {
               </p>
             )}
           </fieldset>
+          {isDoctor && (
+            <>
+              <Select
+                label="Department"
+                value={department}
+                options={DEPARTMENTS}
+                labels={DEPARTMENT_LABELS}
+                onChange={setDepartment}
+              />
+              <Select
+                label="Designation"
+                value={designation}
+                options={DESIGNATIONS}
+                labels={DESIGNATION_LABELS}
+                onChange={setDesignation}
+              />
+              {touched && errors.department && (
+                <p
+                  role="alert"
+                  style={{ color: ds.redText, fontSize: 13, marginTop: -6 }}
+                >
+                  {errors.department}
+                </p>
+              )}
+            </>
+          )}
           {!editing && (
             <div>
               <TextField

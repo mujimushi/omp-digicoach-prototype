@@ -53,7 +53,11 @@ export const users = pgTable(
     lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
     tourCompletedAt: timestamp('tour_completed_at', { withTimezone: true }),
   },
-  (t) => [uniqueIndex('users_username_unique').on(lower(t.username))],
+  (t) => [
+    uniqueIndex('users_username_unique').on(lower(t.username)),
+    // Doctors and admins log in separately.
+    check('users_one_role', sql`${t.isDoctor} <> ${t.isAdmin}`),
+  ],
 );
 
 export const loginSessions = pgTable(

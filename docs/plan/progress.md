@@ -548,6 +548,7 @@ Asked for by the client on 2026-09-28: new doctors should learn the app before t
 - **Seeded doctors have seen the tour**, except the two who must still change their password. Known end-to-end users have seen it too.
 - **The admin's doctor list leaves out the tour time**; `DoctorActivityRow` is unchanged.
 - **`resetDatabase()` in the E2E helpers runs `npm.cmd` through a shell on Windows**, so the suite runs on a Windows machine.
+- **One role per account (2026-09-28).** Sadia decided doctors and admins log in separately, so no account is both. The dashboard's form offers Doctor or Admin as one choice and hides department and designation for an admin; `DoctorInput` and the update route refuse both roles or neither (400 `validation_failed`); migration `0004_users_one_role` adds the check `users_one_role` (`is_doctor <> is_admin`), after turning any account that was both into an admin only. `create-admin` makes admins only; its `--doctor` option is gone. The dashboard's 8-hour re-login for doctor-admins is removed, since an admin's login ends after 8 hours anyway. The seed now has a separate `admin` login, and `dr.ayesha` is an ordinary doctor. This replaces the 2026-09-17 decision on doctor-admins' login lengths and settles the phase 3 open question.
 
 ## Screen review
 

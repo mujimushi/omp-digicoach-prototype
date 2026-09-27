@@ -66,9 +66,9 @@ describe('route guards', () => {
   it.each(['/', '/history', '/admin', '/admin/doctors'])(
     'always land a user who must change their password on the change screen, from %s',
     async (path) => {
+      // Doctors and admins are separate accounts: each opens their own area.
       meAnswers({
-        ...mockData.doctor,
-        isAdmin: true,
+        ...(path.startsWith('/admin') ? mockData.admin : mockData.doctor),
         mustChangePassword: true,
       });
       const router = open(path);

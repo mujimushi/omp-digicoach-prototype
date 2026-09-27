@@ -27,6 +27,8 @@ export async function loadTenTimesSeed(): Promise<{
     ...fixtures.makeDoctor(),
     tourCompletedAt: null,
     passwordHash,
+    // The first account is the admin, who doesn't teach.
+    isDoctor: i !== 0,
     isAdmin: i === 0,
   }));
   await db.insert(users).values(doctors);

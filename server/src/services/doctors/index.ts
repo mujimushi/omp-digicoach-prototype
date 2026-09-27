@@ -7,6 +7,7 @@ import type {
   RatingSpread,
   TaughtStudentRow,
 } from '@omp/shared';
+import { ONE_ROLE } from '@omp/shared';
 import { eq, sql } from 'drizzle-orm';
 import type { Db } from '../../db/client.ts';
 import { auditLog, users } from '../../db/schema.ts';
@@ -257,6 +258,8 @@ export async function updateDoctor(
       isAdmin: update.isAdmin ?? existing.isAdmin,
       active: update.active ?? existing.active,
     };
+    if (next.isDoctor === next.isAdmin)
+      throw new DoctorError('validation_failed', ONE_ROLE);
     if (
       next.isDoctor &&
       (next.department === null || next.designation === null)

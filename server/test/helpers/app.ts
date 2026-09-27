@@ -93,6 +93,8 @@ export async function createUser(
       ...doctor,
       mustChangePassword: false,
       tourCompletedAt: null,
+      // Doctors and admins are separate accounts.
+      ...(overrides.isAdmin ? { isDoctor: false } : {}),
       ...overrides,
       passwordHash: await knownHash,
     })

@@ -70,9 +70,9 @@ A whole request failing (network error, 5xx) leaves every item in the outbox. A 
 |---|---|---|---|---|---|
 | GET | `/api/admin/overview` | Admin | none | `OverviewStats` | none |
 | GET | `/api/admin/doctors` | Admin | none | `DoctorActivityRow[]` | none |
-| POST | `/api/admin/doctors` | Admin | `DoctorInput` | `{ doctor: PublicUser, temporaryPassword }` | 409 `username_taken` |
+| POST | `/api/admin/doctors` | Admin | `DoctorInput`: exactly one of `isDoctor` and `isAdmin` | `{ doctor: PublicUser, temporaryPassword }` | 400 `validation_failed` for both roles or neither, 409 `username_taken` |
 | GET | `/api/admin/doctors/:id` | Admin | none | `DoctorDetail` | 404 `not_found` |
-| PATCH | `/api/admin/doctors/:id` | Admin | `DoctorUpdate` | `PublicUser` | 404, 409 `username_taken`, 409 `cannot_change_own_admin` |
+| PATCH | `/api/admin/doctors/:id` | Admin | `DoctorUpdate` | `PublicUser` | 400 `validation_failed` when the result has both roles or neither, 404, 409 `username_taken`, 409 `cannot_change_own_admin` |
 | POST | `/api/admin/doctors/:id/reset-password` | Admin | none | `{ temporaryPassword }`; ends that user's logins | 404 |
 | GET | `/api/admin/students?query=&sort=` | Admin | none | `StudentSummaryRow[]` | none |
 | GET | `/api/admin/students/:id` | Admin | none | `StudentDetail` (profile, sessions, ratings per step over time, change history) | 404 |

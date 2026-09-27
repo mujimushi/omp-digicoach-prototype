@@ -29,6 +29,13 @@
       "when": 1790537398119,
       "tag": "0003_user_tour_completed_at",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790548996315,
+      "tag": "0004_users_one_role",
+      "breakpoints": true
     }
   ]
 }

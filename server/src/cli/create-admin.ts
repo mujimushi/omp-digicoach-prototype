@@ -1,11 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import {
-  DepartmentKey,
-  DesignationKey,
-  type PublicUser,
-  Username,
-} from '@omp/shared';
+import { type PublicUser, Username } from '@omp/shared';
 import { z } from 'zod';
 import { createDatabase, type Db } from '../db/client.ts';
 import { auditLog, users } from '../db/schema.ts';
@@ -19,9 +14,6 @@ import { findUserByUsername, toPublicUser } from '../services/auth/users.ts';
 const AdminArgs = z.object({
   name: z.string().trim().min(2).max(100),
   username: Username,
-  doctor: z.boolean(),
-  department: DepartmentKey.nullable(),
-  designation: DesignationKey.nullable(),
 });
 export type AdminArgs = z.input<typeof AdminArgs>;
 
@@ -32,15 +24,15 @@ export function readableTemporaryPassword(username: string): string {
   }
 }
 
-/** Makes an admin who must change the temporary password at first login. */
+/**
+ * Makes an admin who must change the temporary password at first login. Admins don't teach:
+ * doctors and admins log in separately.
+ */
 export async function createAdmin(
   db: Db,
   args: AdminArgs,
 ): Promise<{ user: PublicUser; temporaryPassword: string }> {
   const input = AdminArgs.parse(args);
-  if (input.doctor && (!input.department || !input.designation)) {
-    throw new Error('A doctor needs --department and --designation.');
-  }
   if (await findUserByUsername(db, input.username)) {
     throw new Error(`The username "${input.username}" is taken.`);
   }
@@ -55,9 +47,9 @@ export async function createAdmin(
         name: input.name,
         username: input.username,
         passwordHash,
-        department: input.department,
-        designation: input.designation,
-        isDoctor: input.doctor,
+        department: null,
+        designation: null,
+        isDoctor: false,
         isAdmin: true,
         mustChangePassword: true,
       })
@@ -83,15 +75,12 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     options: {
       name: { type: 'string' },
       username: { type: 'string' },
-      doctor: { type: 'boolean', default: false },
-      department: { type: 'string' },
-      designation: { type: 'string' },
     },
   });
   const url = process.env.DATABASE_URL;
   if (!url || !values.name || !values.username) {
     console.error(
-      'Usage: npm run create-admin -w server -- --name "Full Name" --username name [--doctor --department medicine --designation professor]',
+      'Usage: npm run create-admin -w server -- --name "Full Name" --username name',
     );
     process.exit(1);
   }
@@ -103,9 +92,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const { user, temporaryPassword } = await createAdmin(db, {
       name: values.name,
       username: values.username,
-      doctor: values.doctor ?? false,
-      department: (values.department ?? null) as AdminArgs['department'],
-      designation: (values.designation ?? null) as AdminArgs['designation'],
     });
     console.log(`Created admin ${user.username}.`);
     console.log(`Temporary password (shown once): ${temporaryPassword}`);

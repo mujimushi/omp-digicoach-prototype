@@ -24,6 +24,9 @@ const Count = z.int().min(0);
 /** An average, or null when there is nothing to average. */
 const Average = z.number().nullable();
 
+/** Doctors and admins log in separately, so no account has both roles. */
+export const ONE_ROLE = 'An account is either a doctor or an admin, not both.';
+
 export const DoctorInput = z
   .strictObject({
     name: PersonName,
@@ -47,7 +50,11 @@ export const DoctorInput = z
       message: 'A doctor needs a department and a designation',
       path: ['department'],
     },
-  );
+  )
+  .refine((account) => account.isDoctor !== account.isAdmin, {
+    message: ONE_ROLE,
+    path: ['role'],
+  });
 export type DoctorInput = z.infer<typeof DoctorInput>;
 
 export const DoctorUpdate = z.strictObject({

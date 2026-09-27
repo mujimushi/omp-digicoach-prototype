@@ -20,14 +20,16 @@ export const SEED_COUNTS = { doctors: 12, students: 60, sessions: 400 };
 export const SEED_WEEKS = 10;
 /** Every seeded account uses this password and has already changed it. */
 export const SEED_PASSWORD = KNOWN_PASSWORD;
-export const SEED_LOGINS = { admin: 'dr.ayesha', doctor: 'dr.bilal' };
+export const SEED_LOGINS = { admin: 'admin', doctor: 'dr.bilal' };
+/** Fixed, so the seeded admin doesn't draw from the fixtures and change the other records. */
+const SEED_ADMIN_ID = '00000000-0000-4000-8000-00000000a001';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Pakistan is UTC+5 all year. 08:00 there is 03:00 UTC. */
 const WARD_START_UTC_HOUR = 3;
 
 /**
- * Empties the database and loads 12 doctors (one also admin), 60 students and 400 sessions spread
+ * Empties the database and loads an admin, 12 doctors, 60 students and 400 sessions spread
  * over the 10 weeks before `now`. The same seed builds the same records relative to `now`.
  */
 export async function seedDatabase(
@@ -44,10 +46,9 @@ export async function seedDatabase(
       if (i === 0) {
         return fixtures.makeDoctor({
           name: 'Dr. Ayesha Siddiqui',
-          username: SEED_LOGINS.admin,
+          username: 'dr.ayesha',
           department: 'medicine',
           designation: 'professor',
-          isAdmin: true,
         });
       }
       if (i === 1) {
@@ -76,6 +77,20 @@ export async function seedDatabase(
         tourCompletedAt: i >= SEED_COUNTS.doctors - 2 ? null : createdAt,
       })),
     );
+    // Doctors and admins log in separately, so the admin is an account of its own.
+    await tx.insert(users).values({
+      id: SEED_ADMIN_ID,
+      name: 'Admin Office',
+      username: SEED_LOGINS.admin,
+      passwordHash,
+      department: null,
+      designation: null,
+      isDoctor: false,
+      isAdmin: true,
+      mustChangePassword: false,
+      createdAt,
+      updatedAt: createdAt,
+    });
 
     const students = Array.from({ length: SEED_COUNTS.students }, () =>
       fixtures.makeStudent(),
@@ -144,7 +159,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       `Seeded ${counts.doctors} doctors, ${counts.students} students and ${counts.sessions} sessions.`,
     );
     console.log(
-      `Log in as ${SEED_LOGINS.admin} (doctor and admin) or ${SEED_LOGINS.doctor} (doctor) with the password "${SEED_PASSWORD}".`,
+      `Log in as ${SEED_LOGINS.doctor} (doctor) on the phone app or ${SEED_LOGINS.admin} (admin) on the dashboard, with the password "${SEED_PASSWORD}".`,
     );
   } finally {
     await pool.end();

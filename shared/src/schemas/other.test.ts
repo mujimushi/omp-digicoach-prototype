@@ -178,6 +178,17 @@ describe('DoctorInput', () => {
     ).toBe(true);
   });
 
+  it('refuses an account that is both doctor and admin, or neither', () => {
+    for (const roles of [
+      { isDoctor: true, isAdmin: true },
+      { isDoctor: false, isAdmin: false },
+    ]) {
+      const result = DoctorInput.safeParse({ ...doctor, ...roles });
+      expect(result.success).toBe(false);
+      expect(result.error?.issues[0]?.path).toEqual(['role']);
+    }
+  });
+
   it('refuses a typed temporary password under 6 characters', () => {
     expect(
       DoctorInput.safeParse({ ...doctor, temporaryPassword: 'short' }).success,

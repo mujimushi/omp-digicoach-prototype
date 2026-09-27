@@ -1,3 +1,4 @@
+import { ONE_ROLE } from '@omp/shared';
 import { and, eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { auditLog, loginAttempts, users } from '../../src/db/schema.ts';
@@ -126,6 +127,33 @@ describe('create doctor', () => {
       department: null,
     });
     expect(response.statusCode).toBe(400);
+  });
+
+  it('refuses an account that is both doctor and admin: 400', async () => {
+    const response = await adminCall('POST', '/api/admin/doctors', {
+      ...newDoctor,
+      isDoctor: true,
+      isAdmin: true,
+    });
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({ code: 'validation_failed' });
+    expect(response.json().message).toContain(ONE_ROLE);
+  });
+
+  it('adds an admin who doesn’t teach', async () => {
+    const response = await adminCall('POST', '/api/admin/doctors', {
+      name: 'Admin Two',
+      username: 'admin.two',
+      department: null,
+      designation: null,
+      isDoctor: false,
+      isAdmin: true,
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json().doctor).toMatchObject({
+      isDoctor: false,
+      isAdmin: true,
+    });
   });
 });
 
@@ -281,6 +309,31 @@ describe('update doctor', () => {
     });
     expect(response.statusCode).toBe(409);
     expect(response.json()).toMatchObject({ code: 'username_taken' });
+  });
+
+  it('refuses giving a doctor the admin role as well: 400', async () => {
+    const doctor = await createUser(db, { username: 'dr.both' });
+    const response = await adminCall(
+      'PATCH',
+      `/api/admin/doctors/${doctor.id}`,
+      { isAdmin: true },
+    );
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({
+      code: 'validation_failed',
+      message: ONE_ROLE,
+    });
+  });
+
+  it('turns a doctor into an admin when both flags change together', async () => {
+    const doctor = await createUser(db, { username: 'dr.promoted' });
+    const response = await adminCall(
+      'PATCH',
+      `/api/admin/doctors/${doctor.id}`,
+      { isDoctor: false, isAdmin: true },
+    );
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ isDoctor: false, isAdmin: true });
   });
 
   it('answers 404 for an unknown doctor', async () => {

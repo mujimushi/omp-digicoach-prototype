@@ -46,6 +46,48 @@ describe('doctor form', () => {
     expect(posted).toBe(0);
   });
 
+  it('makes each account a doctor or an admin, never both', async () => {
+    const user = userEvent.setup();
+    let body: Record<string, unknown> | undefined;
+    server.use(
+      http.post('*/api/admin/doctors', async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({
+          doctor: { ...mockData.admin, username: 'admin.two' },
+          temporaryPassword: 'abcd-efgh-jkmn-pqrs',
+        });
+      }),
+    );
+    renderAdmin('/admin/doctors/new', admin);
+
+    const doctorRole = await screen.findByRole('radio', {
+      name: 'Doctor: uses the phone app',
+    });
+    const adminRole = screen.getByRole('radio', {
+      name: 'Admin: uses this dashboard',
+    });
+    expect(doctorRole).toBeChecked();
+    expect(screen.getByLabelText('Department')).toBeInTheDocument();
+
+    await user.click(adminRole);
+    expect(adminRole).toBeChecked();
+    expect(doctorRole).not.toBeChecked();
+    // An admin doesn't teach, so has no department or designation.
+    expect(screen.queryByLabelText('Department')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Designation')).not.toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Name'), 'Admin Two');
+    await user.type(screen.getByLabelText('Username'), 'admin.two');
+    await user.click(screen.getByRole('button', { name: 'Add doctor' }));
+    await screen.findByTestId('temporary-password');
+    expect(body).toMatchObject({
+      isDoctor: false,
+      isAdmin: true,
+      department: null,
+      designation: null,
+    });
+  });
+
   it('shows the generated password once after saving, then never again', async () => {
     const user = userEvent.setup();
     const { router } = renderAdmin('/admin/doctors/new', admin);

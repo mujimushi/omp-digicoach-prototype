@@ -17,20 +17,13 @@ type SessionRule = {
 /**
  * How long a login lasts. A doctor's phone stays logged in while the app is used at least once
  * every 400 days, the longest a browser keeps a cookie; each use moves the end forward. An admin
- * without the doctor role follows OWASP's short rules.
+ * follows OWASP's short rules. No account is both.
  */
 export const SESSION_RULES = {
   doctor: { idleMs: 400 * DAY_MS, maxMs: null },
   admin: { idleMs: 30 * MINUTE_MS, maxMs: 8 * HOUR_MS },
 } as const satisfies Record<string, SessionRule>;
 
-/**
- * The dashboard needs a password typed this recently, for any account. A doctor who is also admin
- * stays logged in on the phone, but logs in again to open the dashboard after 8 hours.
- */
-export const DASHBOARD_LOGIN_MAX_MS = 8 * HOUR_MS;
-
-/** An account that is both doctor and admin follows the doctor's rules; see DASHBOARD_LOGIN_MAX_MS. */
 export function sessionRulesFor(user: { isDoctor: boolean }): SessionRule {
   return user.isDoctor ? SESSION_RULES.doctor : SESSION_RULES.admin;
 }

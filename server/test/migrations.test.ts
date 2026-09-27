@@ -228,6 +228,22 @@ describe('migrations on an empty database', () => {
     );
   });
 
+  it('refuses a user who is both doctor and admin, or neither', async () => {
+    for (const roles of [
+      { isDoctor: true, isAdmin: true },
+      { isDoctor: false, isAdmin: false },
+    ]) {
+      await expectPgError(
+        () =>
+          database.db
+            .update(users)
+            .set(roles)
+            .where(sql`${users.id} = ${doctor.id}`),
+        CHECK_VIOLATION,
+      );
+    }
+  });
+
   it('refuses a year for a resident on a session', async () => {
     await expectPgError(
       () =>

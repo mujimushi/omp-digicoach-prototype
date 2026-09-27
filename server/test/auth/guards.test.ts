@@ -93,14 +93,17 @@ describe('change-request guard', () => {
 
 describe('requireDoctor and requireAdmin', () => {
   it('return 403 password_change_required while a change is pending', async () => {
-    const both = await createUser(db, {
+    const doctor = await createUser(db, { mustChangePassword: true });
+    const admin = await createUser(db, {
       isAdmin: true,
       mustChangePassword: true,
     });
-    const cookies = await loginAs(app(), both, clock);
 
-    for (const url of ['/api/probe/doctor', '/api/probe/admin']) {
-      const response = await get(url, cookies);
+    for (const [user, url] of [
+      [doctor, '/api/probe/doctor'],
+      [admin, '/api/probe/admin'],
+    ] as const) {
+      const response = await get(url, await loginAs(app(), user, clock));
       expect(response.statusCode).toBe(403);
       expect(response.json()).toMatchObject({
         code: 'password_change_required',
@@ -236,31 +239,6 @@ describe('login expiry', () => {
       lastSeenAt: new Date(clock.getTime() - 60_000),
     });
     expect((await get('/api/me', cookies)).statusCode).toBe(401);
-  });
-
-  it('keeps a doctor who is also admin logged in on the phone, but asks for the password again for the dashboard after 8 hours', async () => {
-    const both = await createUser(db, { isAdmin: true, isDoctor: true });
-    const cookies = await loginAs(app(), both, clock);
-
-    clock = new Date(clock.getTime() + 8 * 60 * 60_000 - 60_000);
-    expect((await get('/api/probe/admin', cookies)).statusCode).toBe(200);
-
-    clock = new Date(clock.getTime() + 2 * 60_000);
-    const dashboard = await get('/api/probe/admin', cookies);
-    expect(dashboard.statusCode).toBe(401);
-    expect(dashboard.json()).toMatchObject({
-      code: 'not_logged_in',
-      message: 'Log in again to open the dashboard.',
-    });
-    // The phone's login is untouched.
-    expect(String(dashboard.headers['set-cookie'] ?? '')).not.toMatch(
-      /omp_session=;/,
-    );
-    expect((await get('/api/probe/doctor', cookies)).statusCode).toBe(200);
-    expect((await get('/api/me', cookies)).statusCode).toBe(200);
-
-    const fresh = await loginAs(app(), both, clock);
-    expect((await get('/api/probe/admin', fresh)).statusCode).toBe(200);
   });
 
   it('refreshes last use at most once a minute', async () => {

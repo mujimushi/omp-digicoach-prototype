@@ -2,7 +2,6 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Config } from '../config.ts';
 import type { Db } from '../db/client.ts';
 import {
-  DASHBOARD_LOGIN_MAX_MS,
   deleteUserSessions,
   findLoginSession,
   type UserRow,
@@ -20,8 +19,6 @@ declare module 'fastify' {
     /** The logged-in user, or null. Never sent as-is: it holds the password hash. */
     user: UserRow | null;
     loginSessionId: string | null;
-    /** When the password was typed for this login. */
-    loginStartedAt: Date | null;
     /** Why a cookie didn't log anyone in. */
     authProblem: 'expired' | 'switched_off' | null;
   }
@@ -44,13 +41,11 @@ export function clearLoginCookie(reply: FastifyReply, config: Config) {
 export function registerAuth(api: FastifyInstance) {
   api.decorateRequest('user');
   api.decorateRequest('loginSessionId');
-  api.decorateRequest('loginStartedAt');
   api.decorateRequest('authProblem');
 
   api.addHook('onRequest', async (request, reply) => {
     request.user = null;
     request.loginSessionId = null;
-    request.loginStartedAt = null;
     request.authProblem = null;
 
     const token = request.cookies[api.config.cookie.name];
@@ -72,7 +67,6 @@ export function registerAuth(api: FastifyInstance) {
     }
     request.user = found.user;
     request.loginSessionId = found.id;
-    request.loginStartedAt = found.createdAt;
     // The login moved forward, so the phone's cookie does too. Login, logout and password change
     // set their own cookie later in the request, which replaces this one.
     if (found.renewedMaxAgeSeconds !== null) {
@@ -126,26 +120,13 @@ export async function requireDoctor(
   }
 }
 
-/** An admin whose password is already changed, typed within the last 8 hours. */
+/** An admin whose password is already changed. An admin's login lasts at most 8 hours. */
 export async function requireAdmin(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
   const user = request.user;
   if (!user) return notLoggedIn(request, reply);
-  const startedAt = request.loginStartedAt?.getTime() ?? 0;
-  if (
-    user.isAdmin &&
-    request.server.now().getTime() - startedAt >= DASHBOARD_LOGIN_MAX_MS
-  ) {
-    // The login still works in the doctor's app; only the dashboard asks for the password again.
-    return sendError(
-      reply,
-      401,
-      'not_logged_in',
-      'Log in again to open the dashboard.',
-    );
-  }
   if (user.mustChangePassword) {
     return sendError(
       reply,
