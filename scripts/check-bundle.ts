@@ -3,7 +3,7 @@
 //
 //   node scripts/check-bundle.ts [app/dist]
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
@@ -24,6 +24,11 @@ export type BundleReport = {
   doctorGzipBytes: number;
   adminChunk: string | null;
 };
+
+/** A path inside the build, with forward slashes on every system. */
+function inDist(distDir: string, file: string): string {
+  return relative(distDir, file).split(sep).join('/');
+}
 
 function listFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -74,7 +79,7 @@ export function checkBundle(
   const files = listFiles(distDir);
   const adminChunk =
     files
-      .map((f) => relative(distDir, f))
+      .map((f) => inDist(distDir, f))
       .find((f) => /^assets\/admin-[A-Za-z0-9_-]+\.js$/.test(f)) ?? null;
   if (!adminChunk)
     problems.push('No admin chunk (assets/admin-*.js) was built');
@@ -85,7 +90,7 @@ export function checkBundle(
     for (const marker of MOCK_MARKERS) {
       if (marker.test(text))
         problems.push(
-          `Mock code (${marker}) found in ${relative(distDir, file)}`,
+          `Mock code (${marker}) found in ${inDist(distDir, file)}`,
         );
     }
   }
