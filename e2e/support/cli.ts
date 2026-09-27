@@ -6,13 +6,17 @@ const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
 
 /** Runs `npm run <script> -w server -- ...args` against the end-to-end database. */
 export function runServerCommand(script: string, args: string[] = []): string {
+  const all = ['run', '--silent', script, '-w', 'server', '--', ...args];
+  // Windows runs npm through its .cmd file, which needs a shell; quote each argument for it.
+  const windows = process.platform === 'win32';
   return execFileSync(
-    'npm',
-    ['run', '--silent', script, '-w', 'server', '--', ...args],
+    windows ? 'npm.cmd' : 'npm',
+    windows ? all.map((arg) => `"${arg.replaceAll('"', '\\"')}"`) : all,
     {
       cwd: repoRoot,
       env: { ...process.env, ...TEST_SERVER_ENV },
       encoding: 'utf8',
+      shell: windows,
     },
   );
 }
