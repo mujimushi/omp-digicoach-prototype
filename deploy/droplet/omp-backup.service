@@ -1,0 +1,8 @@
+[Unit]
+Description=Back up the OMP DigiCoach database
+Requires=postgresql.service
+After=postgresql.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/omp-backup nightly

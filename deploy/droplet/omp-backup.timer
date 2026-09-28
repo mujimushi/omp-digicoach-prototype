@@ -1,0 +1,10 @@
+[Unit]
+Description=Back up the OMP DigiCoach database every night
+
+[Timer]
+# 21:00 UTC is 02:00 in Pakistan, outside ward hours.
+OnCalendar=*-*-* 21:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

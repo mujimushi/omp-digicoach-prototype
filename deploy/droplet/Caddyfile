@@ -1,0 +1,12 @@
+# Caddy obtains and renews the HTTPS certificate for these names by itself.
+# The app sets its own security headers, including the content security policy.
+
+ompdigicoach.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3000
+}
+
+# One address for everyone, so the app's origin check and the installed phone app agree.
+www.ompdigicoach.com {
+	redir https://ompdigicoach.com{uri} permanent
+}
