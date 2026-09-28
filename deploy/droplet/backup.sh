@@ -12,6 +12,10 @@ FILE="$DIR/omp-$(date -u +%Y%m%d-%H%M%S)-$LABEL.dump"
 sudo -u postgres pg_dump --format=custom --file="$FILE" omp
 echo "Backed up to $FILE ($(du -h "$FILE" | cut -f1))."
 
-# Nightly dumps: keep 14. Dumps taken before a deploy: keep 10.
-ls -1t "$DIR"/omp-*-nightly.dump 2>/dev/null | tail -n +15 | xargs -r rm --
-ls -1t "$DIR"/omp-*-before-*.dump 2>/dev/null | tail -n +11 | xargs -r rm --
+# Keeps the newest $2 files matching $1 and deletes the rest. Fine when there are none yet.
+keep_newest() {
+  find "$DIR" -maxdepth 1 -name "$1" -printf '%T@ %p\n' \
+    | sort -rn | tail -n +"$(($2 + 1))" | cut -d' ' -f2- | xargs -r rm --
+}
+keep_newest 'omp-*-nightly.dump' 14
+keep_newest 'omp-*-before-*.dump' 10
