@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OMP DigiCoach – Admin Guide</title>
+<link rel="stylesheet" href="manual.css">
+</head>
+<body>
+
+<div class="cover">
+  <div class="logo"><img src="../../app/public/logo.svg" alt=""></div>
+  <div class="kicker">OMP DigiCoach</div>
+  <h1>Admin Guide</h1>
+  <p class="lead">How to add doctors, look after their accounts, and read the teaching records on the dashboard.</p>
+  <div class="address">Open the dashboard on a computer at
+    <strong>ompdigicoach.com</strong>
+  </div>
+</div>
+
+<div class="contents">
+  <h1 class="page-title">Contents</h1>
+  <ol>
+    <li><a href="#about">What the dashboard does</a></li>
+    <li><a href="#login">Logging in and out</a></li>
+    <li><a href="#layout">Finding your way around</a></li>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#doctors">Doctors: the list</a></li>
+    <li><a href="#add">Adding a doctor</a></li>
+    <li><a href="#manage">Looking after a doctor’s account</a></li>
+    <li><a href="#students">Students</a></li>
+    <li><a href="#sessions">Sessions</a></li>
+    <li><a href="#reports">Reports and printing</a></li>
+    <li><a href="#export">Downloading the data (Export)</a></li>
+    <li><a href="#tasks">Quick list of common jobs</a></li>
+    <li><a href="#help">Problems and answers</a></li>
+  </ol>
+</div>
+
+<section class="chapter" id="about">
+  <h2>1. What the dashboard does</h2>
+  <p>Doctors use the OMP DigiCoach app on their phones while they teach. Each time they teach a learner, the app records a <strong>session</strong>: the learner, the case, the time taken and a rating from 1 to 5 for each of the five teaching steps.</p>
+  <p>The dashboard is where you, the admin, see all of this. You can:</p>
+  <ul>
+    <li>add doctors and give them their first password</li>
+    <li>reset a password when a doctor forgets it</li>
+    <li>switch off a doctor who has left</li>
+    <li>see every doctor, student and session</li>
+    <li>print reports and download all the data for analysis</li>
+  </ul>
+  <h3>The five teaching steps</h3>
+  <p>Ratings on the dashboard always follow these five steps, in this order:</p>
+  <table>
+    <tr><th>Step</th><th>Name</th><th>What the doctor does</th></tr>
+    <tr><td>1</td><td>Get a Commitment</td><td>Asks the learner for a diagnosis or plan</td></tr>
+    <tr><td>2</td><td>Probe for Evidence</td><td>Explores the learner’s reasoning</td></tr>
+    <tr><td>3</td><td>Teach General Rule</td><td>Teaches one or two key points</td></tr>
+    <tr><td>4</td><td>Reinforce Strengths</td><td>Praises what went well</td></tr>
+    <tr><td>5</td><td>Correct &amp; Improve</td><td>Guides improvement</td></tr>
+  </table>
+  <h3>The rating scale</h3>
+  <table>
+    <tr><th>Rating</th><th>Meaning</th></tr>
+    <tr><td>1</td><td>Needs improvement</td></tr>
+    <tr><td>2</td><td>Basic</td></tr>
+    <tr><td>3</td><td>Competent</td></tr>
+    <tr><td>4</td><td>Proficient</td></tr>
+    <tr><td>5</td><td>Excellent</td></tr>
+  </table>
+  <p>A dash (<strong>–</strong>) anywhere on the dashboard means “not recorded”, for example a step the doctor did not rate.</p>
+</section>
+
+<section class="chapter" id="login">
+  <h2>2. Logging in and out</h2>
+  <p>Use a computer or laptop with Google Chrome or Microsoft Edge. You get your username and first password from the technical team.</p>
+  <ol class="steps">
+    <li>Open the browser and go to <strong>ompdigicoach.com</strong>.</li>
+    <li>Type your <strong>Username</strong> and <strong>Password</strong>.</li>
+    <li>Click <span class="ui">Log In</span>. The dashboard opens.</li>
+  </ol>
+  <figure>
+    <img src="shots/admin/a01-login.png" alt="">
+    <figcaption>The login page.</figcaption>
+  </figure>
+  <h3>The first time you log in</h3>
+  <p>The app asks you to choose your own password. Type the temporary password, then your new password twice, and click <span class="ui">Save new password</span>. Use at least 6 characters. A short phrase of a few words is easy to remember, for example “tea on the ward window”.</p>
+  <h3>Logging out</h3>
+  <p>Click <span class="ui">Log out</span> at the top right. Always log out on a shared computer.</p>
+  <div class="tip"><b>You may be asked to log in again</b>For safety, the dashboard logs you out after 30 minutes without use, and always after 8 hours. Just log in again; nothing is lost.</div>
+</section>
+
+<section class="chapter" id="layout">
+  <h2>3. Finding your way around</h2>
+  <p>Every page has the same layout:</p>
+  <ul>
+    <li><strong>The menu on the left</strong> takes you to the five main pages: <span class="ui">Overview</span>, <span class="ui">Doctors</span>, <span class="ui">Students</span>, <span class="ui">Sessions</span> and <span class="ui">Export</span>.</li>
+    <li><strong>The top right</strong> shows your name and the <span class="ui">Log out</span> button.</li>
+    <li><strong>Blue underlined names and dates</strong> are links. Click them to open that doctor, student or session.</li>
+    <li><strong>In tables, click a column heading</strong> to sort by it. Click again to reverse the order.</li>
+  </ul>
+  <div class="tip"><b>Times are Pakistan time</b>All dates and times on the dashboard, and in reports and downloads, are in Pakistan time.</div>
+</section>
+
+<section class="chapter" id="overview">
+  <h2>4. Overview</h2>
+  <p>The first page after you log in. It gives a quick picture of teaching across the hospital.</p>
+  <figure>
+    <img src="shots/admin/a02-overview.png" alt="">
+    <figcaption>The Overview page.</figcaption>
+  </figure>
+  <table>
+    <tr><th>Box</th><th>What it shows</th></tr>
+    <tr><td>Active doctors</td><td>Doctors who recorded at least one session in the last 14 days</td></tr>
+    <tr><td>Sessions this week</td><td>Sessions since Monday</td></tr>
+    <tr><td>Students</td><td>All students added by any doctor</td></tr>
+    <tr><td>Average teaching time</td><td>How long sessions took this month. The target is 1 minute.</td></tr>
+    <tr><td>Average extra time</td><td>How far sessions went past 1 minute this month</td></tr>
+    <tr><td>Sessions per week</td><td>A chart of the last 12 weeks</td></tr>
+    <tr><td>Average rating per step</td><td>This month’s average rating for each of the five steps</td></tr>
+  </table>
+  <figure>
+    <img src="shots/admin/a03-overview-ratings.png" alt="">
+    <figcaption>Lower on the page: the average rating for each step this month. A longer bar means a higher rating.</figcaption>
+  </figure>
+</section>
+
+<section class="chapter" id="doctors">
+  <h2>5. Doctors: the list</h2>
+  <p>Click <span class="ui">Doctors</span> in the menu. This lists everyone who can log in, doctors and admins, with their teaching activity.</p>
+  <figure>
+    <img src="shots/admin/a04-doctors.png" alt="">
+    <figcaption>The Doctors list.</figcaption>
+  </figure>
+  <table>
+    <tr><th>Column</th><th>Meaning</th></tr>
+    <tr><td>Role</td><td><strong>Doctor</strong> uses the phone app. <strong>Admin</strong> uses this dashboard.</td></tr>
+    <tr><td>Status</td><td><strong>Active</strong>: can log in. <strong>Must change password</strong>: has not logged in for the first time yet, or had a password reset. <strong>Switched off</strong>: cannot log in.</td></tr>
+    <tr><td>Sessions</td><td>All sessions this doctor has recorded</td></tr>
+    <tr><td>Last 7 days</td><td>Sessions in the past week</td></tr>
+    <tr><td>Last session</td><td>Date of their latest session</td></tr>
+    <tr><td>Avg teaching / Avg extra</td><td>Their average session time, and average time past 1 minute</td></tr>
+    <tr><td>All 5 rated</td><td>How often they rated all five steps</td></tr>
+  </table>
+  <p>Click a doctor’s name to open their page (see chapter 7).</p>
+</section>
+
+<section class="chapter" id="add">
+  <h2>6. Adding a doctor</h2>
+  <p>Add each doctor once. They then log in on their own phone.</p>
+  <ol class="steps">
+    <li>Click <span class="ui">Doctors</span> in the menu, then <span class="ui">+ Add doctor</span> at the top right.</li>
+    <li><strong>Name:</strong> the doctor’s full name, for example “Dr. Sara Malik”.</li>
+    <li><strong>Username:</strong> the name they will type to log in. Use small letters, numbers, dots or underscores only, 3 to 30 characters, for example <strong>dr.sara</strong>. No spaces.</li>
+    <li><strong>Role:</strong> leave it on <strong>Doctor: uses the phone app</strong>.</li>
+    <li>Choose their <strong>Department</strong> and <strong>Designation</strong>.</li>
+    <li><strong>Temporary password:</strong> leave it empty and the app makes one for you. Or click <span class="ui">Generate password</span> to see it now.</li>
+    <li>Click <span class="ui">Add doctor</span>.</li>
+  </ol>
+  <figure>
+    <img src="shots/admin/a05-add-doctor.png" alt="">
+    <figcaption>The Add doctor form, filled in.</figcaption>
+  </figure>
+
+  <h3>Give the doctor their temporary password</h3>
+  <p>After you click <span class="ui">Add doctor</span>, the temporary password appears <strong>once</strong>.</p>
+  <figure>
+    <img src="shots/admin/a07-password-once.png" alt="">
+    <figcaption>The temporary password. Write it down or click Copy before you click Done.</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>Write the password down, or click <span class="ui">Copy</span>.</li>
+    <li>Give the doctor their <strong>username</strong> and <strong>temporary password</strong> <strong>in person or by phone call</strong>.</li>
+    <li>Click <span class="ui">Done</span>.</li>
+  </ol>
+  <div class="warn"><b>Never send passwords by email, WhatsApp or SMS</b>Messages can be forwarded or read by others. Tell the doctor in person or on a call.</div>
+  <p><strong>What the doctor does next:</strong> they open <strong>ompdigicoach.com</strong> on their phone, log in with the temporary password, and choose their own password. The app then shows them a short tour. Their status changes from “Must change password” to “Active”.</p>
+  <div class="tip"><b>Lost the temporary password?</b>No problem. Open the doctor, click <span class="ui">Edit</span>, then <span class="ui">Reset password</span> to get a new one (chapter 7).</div>
+
+  <h3>Adding another admin</h3>
+  <p>An admin uses only this dashboard, not the phone app. To add one, follow the same steps but choose <strong>Admin: uses this dashboard</strong> as the role. Department and designation are not needed.</p>
+  <figure>
+    <img src="shots/admin/a06-add-admin.png" alt="">
+    <figcaption>Choosing the Admin role hides department and designation.</figcaption>
+  </figure>
+  <div class="tip"><b>One role per account</b>An account is either a doctor or an admin, never both. If an admin also teaches, give them two accounts with different usernames: an admin one for the dashboard and a doctor one for the phone.</div>
+</section>
+
+<section class="chapter" id="manage">
+  <h2>7. Looking after a doctor’s account</h2>
+  <h3>A doctor’s page</h3>
+  <p>Click a doctor’s name in the Doctors list. Their page shows their activity at the top, then three tables.</p>
+  <figure>
+    <img src="shots/admin/a08-doctor-detail.png" alt="">
+    <figcaption>A doctor’s page. The buttons at the top right open their Report and Edit page.</figcaption>
+  </figure>
+  <ul>
+    <li><strong>Spread of ratings:</strong> for each step, how many times they gave each rating.</li>
+    <li><strong>Students taught:</strong> every student they taught, with the number of sessions.</li>
+    <li><strong>Sessions:</strong> all their sessions, newest first. The ratings column shows steps 1 to 5 in order, for example “4 · 3 · 5 · 4 · 2”.</li>
+  </ul>
+  <figure>
+    <img src="shots/admin/a10-doctor-sessions.png" alt="">
+    <figcaption>Further down: the doctor’s sessions. Click a date to open that session.</figcaption>
+  </figure>
+
+  <h3>Changing a doctor’s details</h3>
+  <ol class="steps">
+    <li>Open the doctor and click <span class="ui">Edit</span>.</li>
+    <li>Change the name, username, department or designation.</li>
+    <li>Click <span class="ui">Save changes</span>.</li>
+  </ol>
+  <figure>
+    <img src="shots/admin/a11-edit-doctor.png" alt="">
+    <figcaption>The Edit page. Password reset and switching off are in the Access box at the bottom.</figcaption>
+  </figure>
+  <div class="tip"><b>Changed a username?</b>Tell the doctor. They must use the new username next time they log in.</div>
+
+  <h3>When a doctor forgets their password</h3>
+  <ol class="steps">
+    <li>Open the doctor and click <span class="ui">Edit</span>.</li>
+    <li>Click <span class="ui">Reset password</span>, then <span class="ui">Reset password</span> again to confirm.</li>
+    <li>A new temporary password appears once. Give it to the doctor in person or by phone call.</li>
+  </ol>
+  <figure class="small">
+    <img src="shots/admin/a12-reset-confirm.png" alt="">
+    <figcaption>The app asks before resetting.</figcaption>
+  </figure>
+  <p>The doctor is logged out on their phone and must choose a new password with the temporary one. <strong>Their sessions are safe.</strong></p>
+  <div class="tip"><b>Sessions waiting on the phone are kept</b>If the doctor recorded sessions without signal, the phone keeps them and sends them once the doctor logs in again with the new password.</div>
+
+  <h3>When a doctor leaves: switch them off</h3>
+  <ol class="steps">
+    <li>Open the doctor and click <span class="ui">Edit</span>.</li>
+    <li>Click <span class="ui">Switch off</span>, then <span class="ui">Switch off</span> again to confirm.</li>
+  </ol>
+  <figure class="small">
+    <img src="shots/admin/a13-switch-off-confirm.png" alt="">
+    <figcaption>Switching off asks first.</figcaption>
+  </figure>
+  <p>They can no longer log in or send sessions. <strong>All their past sessions stay</strong> in the dashboard and in downloads. To let them back in, open the same Edit page and click <span class="ui">Switch on</span>.</p>
+  <div class="tip"><b>Switch off, don’t delete</b>There is no way to delete a doctor. Switching off keeps the study data complete.</div>
+  <p>You cannot switch off your own account, or remove your own admin role. This stops you locking yourself out.</p>
+</section>
+
+<section class="chapter" id="students">
+  <h2>8. Students</h2>
+  <p>Doctors add students on their phones. All doctors share one student list, so a student taught by several doctors appears once.</p>
+  <h3>The students list</h3>
+  <p>Click <span class="ui">Students</span> in the menu.</p>
+  <figure>
+    <img src="shots/admin/a15-students.png" alt="">
+    <figcaption>The Students list. Step 1 to Step 5 show each student’s average rating.</figcaption>
+  </figure>
+  <ul>
+    <li><strong>Search:</strong> type part of a name or a PMDC number in the search box.</li>
+    <li><strong>Sort by:</strong> Name, Most sessions, Most recent session, or PMDC number.</li>
+    <li><strong>Doctors:</strong> how many different doctors have taught this student.</li>
+  </ul>
+
+  <h3>A student’s page</h3>
+  <p>Click a student’s name. The top shows their number of sessions and doctors, and their average for each step.</p>
+  <figure>
+    <img src="shots/admin/a16-student-detail.png" alt="">
+    <figcaption>A student’s page. The Report button at the top right opens a printable report.</figcaption>
+  </figure>
+  <h3>Correcting a student’s details</h3>
+  <p>If a doctor typed a name or PMDC number wrongly, fix it in the <strong>Profile</strong> box: change the name, PMDC number or level (and year, for medical students), then click <span class="ui">Save correction</span>. The change is recorded in the <strong>Change history</strong> at the bottom of the page and reaches the doctors’ phones.</p>
+  <figure>
+    <img src="shots/admin/a17-student-chart.png" alt="">
+    <figcaption>Further down: a chart of the student’s ratings for each step over time, and their sessions.</figcaption>
+  </figure>
+  <figure>
+    <img src="shots/admin/a18-student-history.png" alt="">
+    <figcaption>At the bottom: the student’s sessions, and the Change history, which lists any corrections to their details. It says “No changes recorded” until someone corrects them.</figcaption>
+  </figure>
+</section>
+
+<section class="chapter" id="sessions">
+  <h2>9. Sessions</h2>
+  <p>Click <span class="ui">Sessions</span> in the menu to see every session from every doctor, newest first.</p>
+  <figure>
+    <img src="shots/admin/a20-sessions.png" alt="">
+    <figcaption>The Sessions list, with filters at the top.</figcaption>
+  </figure>
+  <h3>Finding sessions</h3>
+  <ol class="steps">
+    <li>Choose any of: a <strong>From</strong> date, a <strong>To</strong> date, a <strong>Doctor</strong>, a <strong>Case type</strong>.</li>
+    <li>Click <span class="ui">Filter</span>. The number of matching sessions shows under the page title.</li>
+    <li>Click <span class="ui">Clear</span> to see all sessions again.</li>
+  </ol>
+  <table>
+    <tr><th>Column</th><th>Meaning</th></tr>
+    <tr><td>Teaching</td><td>Total teaching time</td></tr>
+    <tr><td>Extra</td><td>Time past the 1-minute target</td></tr>
+    <tr><td>Ratings, steps 1–5</td><td>The five ratings in order. A dash means that step was not rated.</td></tr>
+    <tr><td>Useful</td><td>How useful the doctor found the teaching, from 1 to 6</td></tr>
+  </table>
+  <h3>One session</h3>
+  <p>Click a session’s date to see everything recorded: doctor, student, case, times, the doctor’s notes and the rating for each step.</p>
+  <figure>
+    <img src="shots/admin/a21-session-detail.png" alt="">
+    <figcaption>A session’s page.</figcaption>
+  </figure>
+  <h3>Deleting a session</h3>
+  <p>Only delete a session that was recorded by mistake, for example a test.</p>
+  <ol class="steps">
+    <li>Open the session and click <span class="ui">Delete session</span>.</li>
+    <li>Click <span class="ui">Delete session</span> again to confirm.</li>
+  </ol>
+  <figure class="small">
+    <img src="shots/admin/a23-delete-confirm.png" alt="">
+    <figcaption>Deleting asks first.</figcaption>
+  </figure>
+  <div class="warn"><b>Deleting cannot be undone</b>The session and its ratings are removed from the dashboard and downloads. The deletion is recorded. The doctor still sees it in the History on their own phone.</div>
+</section>
+
+<section class="chapter" id="reports">
+  <h2>10. Reports and printing</h2>
+  <p>There are two printable reports: one for a student and one for a doctor.</p>
+  <h3>Student report</h3>
+  <ol class="steps">
+    <li>Open the student (<span class="ui">Students</span>, then click their name).</li>
+    <li>Click <span class="ui">Report</span> at the top right.</li>
+    <li>To show only part of the time, choose a <strong>From</strong> and <strong>To</strong> date. Leave them empty for all sessions.</li>
+    <li>Click <span class="ui">Print or save as PDF</span>.</li>
+  </ol>
+  <figure>
+    <img src="shots/admin/a19-student-report.png" alt="">
+    <figcaption>A student report: summary, a chart of ratings over time, and the list of sessions below.</figcaption>
+  </figure>
+  <h3>Doctor report</h3>
+  <p>Open the doctor, click <span class="ui">Report</span>, then <span class="ui">Print or save as PDF</span>. It shows their activity, the spread of their ratings and their sessions.</p>
+  <figure>
+    <img src="shots/admin/a14-doctor-report.png" alt="">
+    <figcaption>A doctor report.</figcaption>
+  </figure>
+  <div class="tip"><b>Saving as a PDF file</b>In the print window, set <strong>Destination</strong> (or <strong>Printer</strong>) to <strong>Save as PDF</strong>, then click <span class="ui">Save</span>. The menu and buttons are left out of the printout automatically.</div>
+</section>
+
+<section class="chapter" id="export">
+  <h2>11. Downloading the data (Export)</h2>
+  <p>Export gives you a spreadsheet file (CSV) with one row per session. It opens in Excel and SPSS.</p>
+  <ol class="steps">
+    <li>Click <span class="ui">Export</span> in the menu.</li>
+    <li>Choose a <strong>From</strong> and <strong>To</strong> date, or leave both empty to download every session.</li>
+    <li>Click <span class="ui">Download CSV</span>. The file goes to your Downloads folder.</li>
+  </ol>
+  <figure>
+    <img src="shots/admin/a24-export.png" alt="">
+    <figcaption>The Export page.</figcaption>
+  </figure>
+  <div class="warn"><b>Keep downloaded files safe</b>The file contains student names and ratings. Store it only on a password-protected computer and do not email it. Each download is recorded.</div>
+</section>
+
+<section class="chapter" id="tasks">
+  <h2>12. Quick list of common jobs</h2>
+  <table>
+    <tr><th>I want to…</th><th>Do this</th></tr>
+    <tr><td>Add a doctor</td><td>Doctors → + Add doctor → fill in → Add doctor → give the password in person</td></tr>
+    <tr><td>Reset a password</td><td>Doctors → the doctor → Edit → Reset password → confirm</td></tr>
+    <tr><td>Stop a doctor logging in</td><td>Doctors → the doctor → Edit → Switch off → confirm</td></tr>
+    <tr><td>Let them back in</td><td>Doctors → the doctor → Edit → Switch on</td></tr>
+    <tr><td>Fix a doctor’s name</td><td>Doctors → the doctor → Edit → change → Save changes</td></tr>
+    <tr><td>Fix a student’s details</td><td>Students → the student → Profile → change → Save correction</td></tr>
+    <tr><td>See one doctor’s sessions</td><td>Sessions → Doctor: choose → Filter</td></tr>
+    <tr><td>Print a student report</td><td>Students → the student → Report → Print or save as PDF</td></tr>
+    <tr><td>Download all data</td><td>Export → leave dates empty → Download CSV</td></tr>
+    <tr><td>Add another admin</td><td>Doctors → + Add doctor → Role: Admin → Add doctor</td></tr>
+  </table>
+</section>
+
+<section class="chapter qa" id="help">
+  <h2>13. Problems and answers</h2>
+  <h4>I forgot my own password.</h4>
+  <p>Ask another admin to reset it for you (chapter 7). If you are the only admin, contact the technical team.</p>
+  <h4>The dashboard sent me back to the login page.</h4>
+  <p>You were logged out for safety after 30 minutes without use, or after 8 hours. Log in again.</p>
+  <h4>A doctor says “Wrong username or password”.</h4>
+  <p>Check the username on their Doctors page; it must be typed exactly, in small letters. If they still cannot log in, reset their password.</p>
+  <h4>A doctor says “This account has been switched off”.</h4>
+  <p>Open their Edit page and click <span class="ui">Switch on</span>.</p>
+  <h4>A doctor’s session is not on the dashboard.</h4>
+  <p>Sessions recorded without signal wait on the phone. Ask the doctor to open the app where there is signal. The badge at the top of their app shows “All sent” when everything has arrived.</p>
+  <h4>The same student appears twice.</h4>
+  <p>Two doctors probably added them with slightly different names. Correct the details on one of them so they are easy to tell apart, and tell the doctors which one to use.</p>
+  <h4>“That username is taken.”</h4>
+  <p>Someone already has it. Choose another, for example add the first letter of the surname: <strong>dr.sara.m</strong>.</p>
+  <h4>A number looks wrong.</h4>
+  <p>Averages leave out steps that were not rated. Check the session list for that doctor or student, and remember dates are Pakistan time.</p>
+</section>
+
+</body>
+</html>

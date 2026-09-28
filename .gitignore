@@ -12,3 +12,6 @@ test-results/
 blob-report/
 coverage/
 **/playwright/.auth/
+
+# Built manuals
+docs/manuals/dist/
