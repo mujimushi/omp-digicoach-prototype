@@ -1,5 +1,7 @@
 # Deploy
 
+> **Changed on 2026-09-28:** production runs on a DigitalOcean droplet, not App Platform. See `docs/runbooks/droplet.md`. The App Platform steps below are kept for reference.
+
 ## What does a push to `main` do?
 
 DigitalOcean App Platform builds the app from `sadiash/omp-digicoach` with `npm ci && npm run build`. Then the `migrate` job runs `npm run db:migrate -w server` once, against the production database. Only after it succeeds does the new `web` service start and take traffic, once `/api/health` answers.

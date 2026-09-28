@@ -32,6 +32,7 @@ Where things are, for the next session:
 | 4E Quality and deploy prep | Done | `phase-4e-v1` |
 | 5 Integration and hardening | Done, except the person checks | `rc-1` |
 | 6 Verification gate | Done, except the person checks | `phase-6-v1` |
+| 7 Deploy | Running at https://ompdigicoach.com on a droplet; accounts, smoke test, restore drill and alerts still to do | none yet |
 | 9 App tour | Done, on `main` | none yet |
 
 ## Phase 2: Contracts
@@ -549,6 +550,7 @@ Asked for by the client on 2026-09-28: new doctors should learn the app before t
 - **The admin's doctor list leaves out the tour time**; `DoctorActivityRow` is unchanged.
 - **`resetDatabase()` in the E2E helpers runs `npm.cmd` through a shell on Windows**, so the suite runs on a Windows machine.
 - **One role per account (2026-09-28).** Sadia decided doctors and admins log in separately, so no account is both. The dashboard's form offers Doctor or Admin as one choice and hides department and designation for an admin; `DoctorInput` and the update route refuse both roles or neither (400 `validation_failed`); migration `0004_users_one_role` adds the check `users_one_role` (`is_doctor <> is_admin`), after turning any account that was both into an admin only. `create-admin` makes admins only; its `--doctor` option is gone. The dashboard's 8-hour re-login for doctor-admins is removed, since an admin's login ends after 8 hours anyway. The seed now has a separate `admin` login, and `dr.ayesha` is an ordinary doctor. This replaces the 2026-09-17 decision on doctor-admins' login lengths and settles the phase 3 open question.
+- **A droplet instead of App Platform (2026-09-28).** Sadia chose the droplet she had signed up for: `ubuntu-s-1vcpu-1gb-nyc1` (159.223.183.20, New York), with the domain ompdigicoach.com from Hostinger. Caddy serves HTTPS with a Let's Encrypt certificate and redirects `www`; PostgreSQL 16 runs on the droplet; `omp-deploy` builds, backs up, migrates and restarts; backups are nightly dumps on the droplet. `deploy/droplet/` holds every file, and `docs/runbooks/droplet.md` explains running it. `.do/app.yaml` is no longer used. **Open:** the region is New York, not Bangalore or Frankfurt as phase 7 suggested, so check that the ethics approval allows study data stored in the USA; and the backups need a copy off the droplet (DigitalOcean droplet backups).
 
 ## Screen review
 

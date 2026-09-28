@@ -1,5 +1,7 @@
 # Restore a backup
 
+> **Changed on 2026-09-28:** production runs on a DigitalOcean droplet, not App Platform. See `docs/runbooks/droplet.md`. The App Platform steps below are kept for reference.
+
 DigitalOcean backs up the database every day and keeps backups for 7 days, with restore to any point in that window. A restore always creates a **new** cluster, called a fork; the production database is never overwritten.
 
 ## How do I check a backup restores?

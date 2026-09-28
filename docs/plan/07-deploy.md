@@ -1,5 +1,7 @@
 # Phase 7: Deploy
 
+> **Changed on 2026-09-28:** production runs on a DigitalOcean droplet, not App Platform. See `docs/runbooks/droplet.md`. The App Platform steps below are kept for reference.
+
 **Read first:** `docs/plan/00-allowed-apis.md` (section DigitalOcean App Platform and Managed PostgreSQL), `docs/runbooks/` (from phase 4E), `.do/app.yaml`.
 **Depends on:** phase 6 passed, and the DigitalOcean account.
 **Runs:** in order.

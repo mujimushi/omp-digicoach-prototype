@@ -1,5 +1,7 @@
 # Roll back
 
+> **Changed on 2026-09-28:** production runs on a DigitalOcean droplet, not App Platform. See `docs/runbooks/droplet.md`. The App Platform steps below are kept for reference.
+
 ## How do I go back to the previous version?
 
 1. App Platform → the app → **Activity**.
