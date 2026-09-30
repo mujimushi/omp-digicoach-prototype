@@ -162,6 +162,8 @@ async function mergePull(
   db: PhoneDb,
   pulled: PullResponse,
   now: Date,
+  /** A full pull lists every student this doctor sees: the phone drops the others. */
+  fullStudentList: boolean,
 ): Promise<boolean> {
   const pending = await pendingIds(db);
   // The cursor is saved in the same transaction as the aliases' remapping: if the app closes
@@ -188,6 +190,28 @@ async function mergePull(
         ) {
           await remapStudentId(db, alias.aliasId, alias.studentId);
         }
+      }
+      if (fullStudentList) {
+        // Keep what the server listed, anything still waiting to send, the session in progress's
+        // student and the students of this doctor's own sessions; drop the rest. Only the phone's
+        // copy goes: the server keeps every record.
+        const keep = new Set([
+          ...pulled.students.map((s) => s.id),
+          ...pending.students,
+        ]);
+        const draft = await db.drafts.get('current');
+        if (draft) keep.add(draft.draft.studentId);
+        for (const session of await db.sessions.toArray())
+          keep.add(session.studentId);
+        const stale = (await db.students.toCollection().primaryKeys()).filter(
+          (id) => !keep.has(id),
+        );
+        await db.students.bulkDelete(stale);
+        const staleAliases = (await db.studentAliases.toArray())
+          .filter((alias) => !keep.has(alias.studentId))
+          .map((alias) => alias.aliasId);
+        await db.studentAliases.bulkDelete(staleAliases);
+        await db.setMeta('studentScope', 'own');
       }
       await db.setMeta('pullCursor', pulled.cursor);
       await db.setMeta('lastSyncAt', now.toISOString());
@@ -266,19 +290,23 @@ export function createSyncEngine(options: SyncEngineOptions): SyncEngine {
         options.onChanged?.();
       }
 
-      const cursor = (await db.getMeta('pullCursor')) ?? '';
+      // A phone that still holds the old shared list pulls everything once, then keeps only its own.
+      const ownList = (await db.getMeta('studentScope')) === 'own';
+      let cursor = ownList ? ((await db.getMeta('pullCursor')) ?? '') : '';
       let pulled: PullResponse;
       try {
         pulled = await api.pull(cursor);
       } catch (error) {
         // A cursor the server doesn't know: start again from the beginning.
         if (error instanceof ApiRequestError && error.code === 'bad_cursor') {
+          cursor = '';
           pulled = await api.pull('');
         } else {
           throw error;
         }
       }
-      if (await mergePull(db, pulled, now())) options.onChanged?.();
+      if (await mergePull(db, pulled, now(), cursor === ''))
+        options.onChanged?.();
 
       failures = 0;
       clearTimer(retryHandle);

@@ -49,8 +49,10 @@ function fakeApi(
   return { api, pushes, pulls };
 }
 
-async function setup(api: SyncApi) {
+/** A phone that already holds only its own students, unless `sharedList` says it predates that. */
+async function setup(api: SyncApi, { sharedList = false } = {}) {
   const db = freshPhoneDb();
+  if (!sharedList) await db.setMeta('studentScope', 'own');
   const repository = createDexieRepository(db);
   const engine = createSyncEngine({ db, api });
   return { db, repository, engine };
@@ -182,6 +184,8 @@ describe('sync engine: push', () => {
       })),
     );
     const { repository, engine, db } = await setup(api);
+    // A phone that has synced before, so the pulls here are small ones.
+    await db.setMeta('pullCursor', '1');
     const local = fixtures.makeStudentInput({ name: 'Added Offline' });
     await repository.saveStudent(local);
     // The app closes part way through the change.
@@ -470,6 +474,57 @@ describe('sync engine: pull', () => {
     await engine.syncNow();
     expect(cursors).toEqual(['stale', '']);
     expect(await db.getMeta('pullCursor')).toBe('3');
+  });
+
+  it('on a phone from the shared-list days, pulls everything once and keeps only its own students', async () => {
+    const own = fixtures.makeStudent({ name: 'Own Student' });
+    const others = fixtures.makeStudent({ name: 'Another Doctor’s Student' });
+    const taughtBefore = fixtures.makeStudent({ name: 'In An Own Session' });
+    const inDraft = fixtures.makeStudent({
+      name: 'In The Session In Progress',
+    });
+    const cursors: string[] = [];
+    const { engine, db, repository } = await setup(
+      {
+        push: vi.fn(async (items: PushItem[]) => ({
+          // The server hasn't answered yet: the new student stays waiting.
+          results: items.map((i) => ({
+            opId: i.opId,
+            status: 'rejected' as const,
+            code: 'unknown_student' as const,
+          })),
+        })),
+        pull: vi.fn(async (cursor) => {
+          cursors.push(cursor);
+          return { ...emptyPull('9'), students: [own] };
+        }),
+      },
+      { sharedList: true },
+    );
+    await db.setMeta('pullCursor', '5');
+    await db.students.bulkPut([own, others, taughtBefore, inDraft]);
+    await db.sessions.put(fixtures.makeSession({ studentId: taughtBefore.id }));
+    await db.drafts.put({
+      key: 'current',
+      draft: await draftFor(inDraft.id),
+    });
+    const waiting = fixtures.makeStudentInput({ name: 'Waiting To Send' });
+    await repository.saveStudent(waiting);
+
+    await engine.syncNow();
+
+    expect(cursors).toEqual(['']);
+    const kept = (await db.students.toArray()).map((s) => s.name).sort();
+    expect(kept).toEqual(
+      [
+        'In An Own Session',
+        'In The Session In Progress',
+        'Own Student',
+        'Waiting To Send',
+      ].sort(),
+    );
+    expect(await db.getMeta('studentScope')).toBe('own');
+    expect(await db.getMeta('pullCursor')).toBe('9');
   });
 });
 

@@ -44,7 +44,7 @@ const sessionFor = (studentId: string) =>
   });
 
 describe('GET /api/sync/pull', () => {
-  it('with an empty cursor, returns every student and only the caller’s sessions and pearls', async () => {
+  it('with an empty cursor, returns only the caller’s students, sessions and pearls', async () => {
     const s1 = newStudent();
     const s2 = newStudent();
     const mine = sessionFor(s1.id);
@@ -66,9 +66,8 @@ describe('GET /api/sync/pull', () => {
     const { response, body } = await pull(app(), cookies);
 
     expect(response.statusCode).toBe(200);
-    expect(body.students.map((s) => s.id).sort()).toEqual(
-      [s1.id, s2.id].sort(),
-    );
+    expect(body.students.map((s) => s.id)).toEqual([s1.id]);
+    expect(response.body).not.toContain(s2.id);
     expect(body.sessions).toEqual([mine]);
     expect(body.sessions[0]?.steps).toHaveLength(5);
     expect(body.pearls.map((p) => p.diagnosis)).toEqual(['Mine']);
@@ -108,7 +107,7 @@ describe('GET /api/sync/pull', () => {
     });
   });
 
-  it('returns student aliases', async () => {
+  it('returns the caller’s student aliases, and not another doctor’s', async () => {
     const first = fixtures.makeStudentInput({
       pmdcNumber: '44444-P',
       level: 'resident',
@@ -116,12 +115,27 @@ describe('GET /api/sync/pull', () => {
     });
     const copy = { ...newStudent(), pmdcNumber: '44444-P' };
     await push(app(), cookies, [item('student.upsert', first)]);
-    await push(app(), otherCookies, [item('student.upsert', copy)]);
+    await push(app(), cookies, [item('student.upsert', copy)]);
 
     const { body } = await pull(app(), cookies);
     expect(body.studentAliases).toEqual([
       { aliasId: copy.id, studentId: first.id },
     ]);
+    const theirs = await pull(app(), otherCookies);
+    expect(theirs.body.studentAliases).toEqual([]);
+    expect(theirs.body.students).toEqual([]);
+  });
+
+  it('still returns a student another doctor added, once the caller has taught them', async () => {
+    // Before 30 September 2026 the list was shared, so doctors taught students others had added.
+    const theirs = newStudent();
+    await push(app(), otherCookies, [item('student.upsert', theirs)]);
+    const before = await pull(app(), cookies);
+    expect(before.body.students).toEqual([]);
+
+    await push(app(), cookies, [item('session.create', sessionFor(theirs.id))]);
+    const after = await pull(app(), cookies);
+    expect(after.body.students.map((s) => s.id)).toEqual([theirs.id]);
   });
 
   it.each(['abc', '-1', '1.5', '01', '99999999999999999'])(

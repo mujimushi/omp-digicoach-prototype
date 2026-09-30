@@ -39,6 +39,11 @@ export type MetaValues = {
   userId: string;
   user: PublicUser;
   lastSyncAt: string;
+  /**
+   * 'own' once the phone holds only this doctor's students. Phones set up while the student list was
+   * shared (before 30 September 2026) hold every doctor's students until their next full pull.
+   */
+  studentScope: 'own';
 };
 export type MetaKey = keyof MetaValues;
 export type MetaRow = { key: MetaKey; value: MetaValues[MetaKey] };

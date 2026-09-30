@@ -1,6 +1,7 @@
 import { expect, test } from '../../support/fixtures.ts';
 import { firstLoginOnPhone } from '../../support/helpers/admin.ts';
 import {
+  addStudent,
   expectAllSent,
   outboxCount,
   runQuickSession,
@@ -38,15 +39,16 @@ test('E2E-10 the admin switches a doctor off; the doctor’s next sync gets 401;
     'this account will be switched off',
   );
   await expect(
-    phone.page.getByRole('button', { name: 'Teach Ahmed Khan' }),
+    phone.page.getByText('No students yet. Add the first one.'),
   ).toBeVisible();
+  await addStudent(phone.page, 'Taught Before Switch Off');
   await expectAllSent(phone.page);
   await waitForServiceWorker(phone.page);
 
   await phone.context.setOffline(true);
   await runQuickSession(
     phone.page,
-    'Ahmed Khan',
+    'Taught Before Switch Off',
     'Recorded before being switched off',
   );
   await expect(syncBadge(phone.page)).toHaveText(/1 waiting/);

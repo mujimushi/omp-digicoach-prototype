@@ -33,8 +33,9 @@ test('E2E-01 (E2E-D1) the admin adds a doctor; the doctor logs in with the tempo
   await expect(
     phone.page.getByText('Choose the learner to teach'),
   ).toBeVisible();
+  // A new doctor starts with an empty student list of their own.
   await expect(
-    phone.page.getByRole('button', { name: 'Teach Ahmed Khan' }),
+    phone.page.getByText('No students yet. Add the first one.'),
   ).toBeVisible();
 
   await phone.context.close();

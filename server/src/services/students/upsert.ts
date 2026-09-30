@@ -1,8 +1,13 @@
 import type { StudentInput } from '@omp/shared';
-import { and, eq, ne } from 'drizzle-orm';
+import { and, eq, ne, type SQL, sql } from 'drizzle-orm';
 import { nextChangeSeq } from '../../db/change-seq.ts';
 import type { Tx } from '../../db/client.ts';
-import { auditLog, studentAliases, students } from '../../db/schema.ts';
+import {
+  auditLog,
+  studentAliases,
+  students,
+  teachingSessions,
+} from '../../db/schema.ts';
 import {
   applied,
   duplicate,
@@ -37,20 +42,34 @@ export function changedFields(
   };
 }
 
+/** A student with this PMDC number in one doctor's own list. */
 export async function findStudentByPmdc(
   tx: Tx,
+  createdBy: string,
   pmdcNumber: string,
   exceptId?: string,
 ) {
+  const sameList = and(
+    eq(students.createdBy, createdBy),
+    eq(students.pmdcNumber, pmdcNumber),
+  );
   const [row] = await tx
     .select({ id: students.id })
     .from(students)
-    .where(
-      exceptId
-        ? and(eq(students.pmdcNumber, pmdcNumber), ne(students.id, exceptId))
-        : eq(students.pmdcNumber, pmdcNumber),
-    );
+    .where(exceptId ? and(sameList, ne(students.id, exceptId)) : sameList);
   return row;
+}
+
+/**
+ * The students a doctor sees: the ones they added, and any they have taught. Until 30 September
+ * 2026 the list was shared, so a doctor may have taught a student another doctor added; that student
+ * stays visible to both, and no stored record is changed.
+ */
+export function visibleToDoctor(doctorId: string): SQL {
+  return sql`(${students.createdBy} = ${doctorId} or exists (
+    select 1 from ${teachingSessions}
+    where ${teachingSessions.studentId} = ${students.id}
+      and ${teachingSessions.doctorId} = ${doctorId}))`;
 }
 
 /**
@@ -61,7 +80,7 @@ export async function updateStudentRecord(
   tx: Tx,
   actorId: string,
   studentId: string,
-  current: StudentFields,
+  current: StudentFields & { createdBy: string },
   next: StudentFields,
   action: string,
   now: Date,
@@ -72,7 +91,7 @@ export async function updateStudentRecord(
   if (
     next.pmdcNumber !== null &&
     next.pmdcNumber !== current.pmdcNumber &&
-    (await findStudentByPmdc(tx, next.pmdcNumber, studentId))
+    (await findStudentByPmdc(tx, current.createdBy, next.pmdcNumber, studentId))
   ) {
     return 'pmdc_taken';
   }
@@ -121,9 +140,10 @@ export async function upsertStudent(
 
   if (!existing) {
     if (input.pmdcNumber) {
-      const sameNumber = await findStudentByPmdc(tx, input.pmdcNumber);
+      const sameNumber = await findStudentByPmdc(tx, userId, input.pmdcNumber);
       if (sameNumber) {
-        // Two doctors added the same student: keep the first record and remember the new ID.
+        // The doctor added the same student twice: keep the first record and remember the new ID.
+        // Another doctor with the same PMDC number gets a record of their own.
         await tx.insert(studentAliases).values({
           aliasId: input.id,
           studentId: sameNumber.id,
@@ -147,6 +167,13 @@ export async function upsertStudent(
     });
     return applied();
   }
+
+  // A doctor corrects only a student they see: one they added or have taught.
+  const [visible] = await tx
+    .select({ id: students.id })
+    .from(students)
+    .where(and(eq(students.id, targetId), visibleToDoctor(userId)));
+  if (!visible) return rejected('forbidden');
 
   const mapped = viaAlias ? targetId : undefined;
   const outcome = await updateStudentRecord(

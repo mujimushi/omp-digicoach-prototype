@@ -107,8 +107,10 @@ export const students = pgTable(
     changeSeq: changeSeq(),
   },
   (t) => [
-    uniqueIndex('students_pmdc_unique')
-      .on(t.pmdcNumber)
+    // Each doctor keeps their own student list, so a PMDC number is unique within one doctor's
+    // students only. The same person taught by two doctors is two records.
+    uniqueIndex('students_creator_pmdc_unique')
+      .on(t.createdBy, t.pmdcNumber)
       .where(sql`${t.pmdcNumber} is not null`),
     check(
       'students_year_only_for_medical_students',

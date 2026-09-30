@@ -44,7 +44,7 @@ test('E2E-19 a new doctor takes the app tour and a practice session; nothing is 
 
   await expect(page.getByText('Practice · nothing is saved')).toBeVisible();
   await expect(page.getByText('Tap the learner to begin.')).toBeVisible();
-  // The shared student list is hidden during practice.
+  // The doctor's own student list is hidden during practice.
   await expect(
     page.getByRole('button', { name: 'Teach Ahmed Khan' }),
   ).toBeHidden();
@@ -77,7 +77,7 @@ test('E2E-19 a new doctor takes the app tour and a practice session; nothing is 
   await ready.getByRole('button', { name: 'Start teaching' }).click();
   await expect(page.getByText('Practice · nothing is saved')).toBeHidden();
   await expect(
-    page.getByRole('button', { name: 'Teach Ahmed Khan' }),
+    page.getByText('No students yet. Add the first one.'),
   ).toBeVisible();
 
   expect(await outboxCount(page)).toBe(0);
@@ -96,7 +96,7 @@ test('E2E-19 a new doctor takes the app tour and a practice session; nothing is 
 
   await page.reload();
   await expect(
-    page.getByRole('button', { name: 'Teach Ahmed Khan' }),
+    page.getByText('No students yet. Add the first one.'),
   ).toBeVisible();
   await expect(page.getByRole('dialog')).toBeHidden();
   await context.close();
@@ -108,7 +108,7 @@ test('E2E-19 a new doctor takes the app tour and a practice session; nothing is 
   await second.page.getByLabel('Password').fill('my very first ward round');
   await second.page.getByRole('button', { name: 'Log In' }).click();
   await expect(
-    second.page.getByRole('button', { name: 'Teach Ahmed Khan' }),
+    second.page.getByText('No students yet. Add the first one.'),
   ).toBeVisible();
   await expect(second.page.getByRole('dialog')).toBeHidden();
   await second.context.close();

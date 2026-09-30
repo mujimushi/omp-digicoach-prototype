@@ -101,11 +101,11 @@ describe('push: students', () => {
     expect(await db.select().from(processedOps)).toHaveLength(1);
   });
 
-  it('records a correction by a second doctor in audit_log', async () => {
+  it('records a doctor’s correction of their own student in audit_log', async () => {
     const input = newStudent({ name: 'Fatima Rizvi' });
     await push(app(), cookies, [studentItem(input)]);
 
-    const { body } = await push(app(), otherCookies, [
+    const { body } = await push(app(), cookies, [
       studentItem({ ...input, name: 'Fatima Rizvi Shah' }),
     ]);
 
@@ -113,13 +113,13 @@ describe('push: students', () => {
     const [row] = await db.select().from(students);
     expect(row).toMatchObject({
       name: 'Fatima Rizvi Shah',
-      updatedBy: other.id,
+      updatedBy: doctor.id,
       createdBy: doctor.id,
     });
     const audit = await db.select().from(auditLog);
     expect(audit).toMatchObject([
       {
-        actorId: other.id,
+        actorId: doctor.id,
         action: 'student.update',
         entityType: 'student',
         entityId: input.id,
@@ -127,6 +127,34 @@ describe('push: students', () => {
         after: { name: 'Fatima Rizvi Shah' },
       },
     ]);
+  });
+
+  it('refuses a correction of another doctor’s student: forbidden, and changes nothing', async () => {
+    const input = newStudent({ name: 'Fatima Rizvi' });
+    await push(app(), cookies, [studentItem(input)]);
+
+    const { body } = await push(app(), otherCookies, [
+      studentItem({ ...input, name: 'Someone Else' }),
+    ]);
+
+    expect(body.results[0]).toMatchObject({
+      status: 'rejected',
+      code: 'forbidden',
+    });
+    const [row] = await db.select().from(students);
+    expect(row?.name).toBe('Fatima Rizvi');
+    expect(await db.select().from(auditLog)).toEqual([]);
+  });
+
+  it('lets a doctor correct a student they have taught, from before the lists were separate', async () => {
+    const input = newStudent({ name: 'Shared Before' });
+    await push(app(), cookies, [studentItem(input)]);
+    await push(app(), otherCookies, [sessionItem(sessionFor(input.id))]);
+
+    const { body } = await push(app(), otherCookies, [
+      studentItem({ ...input, name: 'Shared Before Corrected' }),
+    ]);
+    expect(body.results[0]?.status).toBe('applied');
   });
 
   it('answers an upsert with a new opId but no changes with duplicate, and writes no audit', async () => {
@@ -138,7 +166,7 @@ describe('push: students', () => {
     expect(await db.select().from(auditLog)).toEqual([]);
   });
 
-  it('maps a new student with an existing PMDC number to that student, and stores sessions against it', async () => {
+  it('maps a doctor’s second record with the same PMDC number to their first, and stores sessions against it', async () => {
     const first = newStudent({ pmdcNumber: '77777-P' });
     await push(app(), cookies, [studentItem(first)]);
 
@@ -147,7 +175,7 @@ describe('push: students', () => {
       pmdcNumber: '77777-p',
     });
     const session = sessionFor(second.id);
-    const { body } = await push(app(), otherCookies, [
+    const { body } = await push(app(), cookies, [
       studentItem(second),
       sessionItem(session),
     ]);
@@ -160,7 +188,32 @@ describe('push: students', () => {
     ]);
     const [stored] = await db.select().from(teachingSessions);
     expect(stored?.studentId).toBe(first.id);
-    expect(stored?.doctorId).toBe(other.id);
+    expect(stored?.doctorId).toBe(doctor.id);
+  });
+
+  it('gives a second doctor their own record for a student with the same PMDC number', async () => {
+    const first = newStudent({ pmdcNumber: '77777-P' });
+    await push(app(), cookies, [studentItem(first)]);
+
+    const theirs = newStudent({ pmdcNumber: '77777-P' });
+    const session = sessionFor(theirs.id);
+    const { body } = await push(app(), otherCookies, [
+      studentItem(theirs),
+      sessionItem(session),
+    ]);
+
+    expect(body.results.map((r) => r.status)).toEqual(['applied', 'applied']);
+    expect(body.results[0]?.mappedStudentId).toBeUndefined();
+    const rows = await db.select().from(students);
+    expect(rows.map((r) => [r.id, r.createdBy]).sort()).toEqual(
+      [
+        [first.id, doctor.id],
+        [theirs.id, other.id],
+      ].sort(),
+    );
+    expect(await db.select().from(studentAliases)).toEqual([]);
+    const [stored] = await db.select().from(teachingSessions);
+    expect(stored?.studentId).toBe(theirs.id);
   });
 
   it('refuses to give a student another student’s PMDC number: pmdc_taken', async () => {
@@ -203,9 +256,9 @@ describe('push: students', () => {
     const first = newStudent({ pmdcNumber: '33333-P' });
     const copy = newStudent({ pmdcNumber: '33333-P' });
     await push(app(), cookies, [studentItem(first)]);
-    await push(app(), otherCookies, [studentItem(copy)]);
+    await push(app(), cookies, [studentItem(copy)]);
 
-    const { body } = await push(app(), otherCookies, [
+    const { body } = await push(app(), cookies, [
       studentItem({
         ...copy,
         name: 'Corrected Through Alias',

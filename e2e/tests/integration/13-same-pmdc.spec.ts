@@ -6,7 +6,7 @@ import {
   waitForServiceWorker,
 } from '../../support/helpers/doctor.ts';
 
-test('E2E-13 two doctors, offline, add a student with the same PMDC number and record a session each; after sync there is one student with both sessions', async ({
+test('E2E-13 two doctors, offline, add a student with the same PMDC number and record a session each; after sync each doctor has their own record, with their own session', async ({
   browser,
   browserName,
   isMobile,
@@ -24,9 +24,7 @@ test('E2E-13 two doctors, offline, add a student with the same PMDC number and r
 
   for (const [i, page] of pages.entries()) {
     await page.goto('/');
-    await expect(
-      page.getByRole('button', { name: 'Teach Ahmed Khan' }),
-    ).toBeVisible();
+    await expect(page.getByText('Choose the learner to teach')).toBeVisible();
     await waitForServiceWorker(page);
     await phones[i]?.setOffline(true);
 
@@ -46,25 +44,36 @@ test('E2E-13 two doctors, offline, add a student with the same PMDC number and r
     await expectAllSent(page);
   }
 
-  const students = await queryRows<{ id: string; name: string }>(
-    'select id, name from students where pmdc_number = $1',
+  // Each doctor keeps their own student list: two records, one per doctor.
+  const students = await queryRows<{ id: string; created_by: string }>(
+    'select id, created_by from students where pmdc_number = $1',
     [pmdc.toUpperCase()],
   );
-  expect(students).toHaveLength(1);
-  const sessions = await queryRows<{ student_id: string }>(
-    'select student_id from teaching_sessions where diagnosis like $1',
+  expect(students).toHaveLength(2);
+  expect(new Set(students.map((s) => s.created_by)).size).toBe(2);
+  const sessions = await queryRows<{ student_id: string; doctor_id: string }>(
+    'select student_id, doctor_id from teaching_sessions where diagnosis like $1',
     [`Twin session % ${pmdc}`],
   );
   expect(sessions).toHaveLength(2);
-  expect(sessions.every((s) => s.student_id === students[0]?.id)).toBe(true);
+  for (const session of sessions) {
+    const student = students.find((s) => s.id === session.student_id);
+    expect(student?.created_by).toBe(session.doctor_id);
+  }
 
-  // The second phone now lists the student under the first ID, once.
-  const second = pages[1];
-  if (!second) throw new Error('second phone missing');
-  await second.reload();
-  await expect(
-    second.getByRole('button', { name: /Teach Twin Student/ }),
-  ).toHaveCount(1);
+  // Each phone lists only its own record.
+  for (const [i, page] of pages.entries()) {
+    await page.reload();
+    await expect(page.getByText('Choose the learner to teach')).toBeVisible();
+    const own = i === 0 ? 'Twin Student' : 'Twin Student Typed Again';
+    const other = i === 0 ? 'Twin Student Typed Again' : 'Twin Student';
+    await expect(
+      page.getByRole('button', { name: `Teach ${own}`, exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: `Teach ${other}`, exact: true }),
+    ).toHaveCount(0);
+  }
 
   for (const context of phones) await context.close();
 });

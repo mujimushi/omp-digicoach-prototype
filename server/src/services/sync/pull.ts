@@ -16,6 +16,7 @@ import {
   students,
   teachingSessions,
 } from '../../db/schema.ts';
+import { visibleToDoctor } from '../students/upsert.ts';
 
 const CURSOR_PATTERN = /^(0|[1-9][0-9]{0,14})$/;
 
@@ -92,7 +93,8 @@ export function toPearl(row: PearlRow): Pearl {
 }
 
 /**
- * Everything changed after the cursor: all students and aliases, the caller's sessions with their
+ * Everything changed after the cursor: the caller's students (added or taught) and their aliases,
+ * the caller's sessions with their
  * steps and the caller's pearls, deleted ones included. Reads the counter first and returns rows up
  * to it; writes commit in counter order, so nothing that commits late is skipped.
  */
@@ -109,12 +111,18 @@ export async function pullChanges(
     db
       .select()
       .from(students)
-      .where(inRange(students.changeSeq))
+      .where(and(inRange(students.changeSeq), visibleToDoctor(userId)))
       .orderBy(asc(students.changeSeq)),
     db
-      .select()
+      .select({
+        aliasId: studentAliases.aliasId,
+        studentId: studentAliases.studentId,
+        createdAt: studentAliases.createdAt,
+        changeSeq: studentAliases.changeSeq,
+      })
       .from(studentAliases)
-      .where(inRange(studentAliases.changeSeq))
+      .innerJoin(students, eq(students.id, studentAliases.studentId))
+      .where(and(inRange(studentAliases.changeSeq), visibleToDoctor(userId)))
       .orderBy(asc(studentAliases.changeSeq)),
     db
       .select()

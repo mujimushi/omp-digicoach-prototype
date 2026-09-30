@@ -486,18 +486,16 @@ test('pilot re-test checklist, 30 September 2026', async ({
   // ---------------------------------------------------------------- 3.1 account creation
   await check(
     '3.1',
-    'Temporary passwords match ^[a-z]+[0-9]{4}$; IDs are generated',
+    'Temporary passwords match ^[a-z]+[0-9]{4}$; usernames are the admin’s choice',
     async () => {
       // The 1,000-password run is the unit test shared/src/rules/pilot-retest-2026-09-30.test.ts.
       for (const password of [a.password, b.password])
         expect(password).toMatch(/^[a-z]+[0-9]{4}$/);
       const form = await piPage.goto('/admin/doctors/new');
       expect(form?.ok()).toBe(true);
-      // A generated ID would be offered by the form; the admin types the username instead.
+      // Decided after the re-test: the app generates no IDs, the admin types every username.
       await expect(piPage.getByLabel('Username')).toHaveValue('');
-      throw new Error(
-        `Passwords pass (${a.password}, ${b.password}), but the app generates no IDs: the admin types every username`,
-      );
+      return `passwords pass (${a.password}, ${b.password}); the admin types each username, as decided`;
     },
   );
 
@@ -516,10 +514,10 @@ test('pilot re-test checklist, 30 September 2026', async ({
         await expect(field).toHaveAttribute('spellcheck', 'false');
       }
       await firstLogin(aPage, aName, a.password, newPassword);
-      // The trial session opens once the app has checked the user with the server.
-      await expect(welcome(aPage).or(home(aPage))).toBeVisible({
-        timeout: 15_000,
-      });
+      await shot(aPage, '3.2-after-first-login');
+      // The trial session opens once the app has checked the user with the server. The home
+      // screen sits behind the welcome dialog, so both can match: take the first.
+      await expect(welcome(aPage).or(home(aPage)).first()).toBeVisible();
       return 'attributes set on both fields; first typed login succeeded';
     },
   );
@@ -768,13 +766,20 @@ test('pilot re-test checklist, 30 September 2026', async ({
     '4.4',
     'B teaches Student 1; A sees only A’s session with Student 1',
     async () => {
+      // Each doctor keeps their own list, so B adds their own record for the same student.
       await bPage.goto('/');
+      await expect(
+        bPage.getByRole('button', { name: `Teach ${student1}` }),
+      ).toHaveCount(0);
+      await addStudent(bPage, student1);
       await runSession(bPage, student1, diagnoses.b1);
       await aHomePage.goto('/');
       await aHomePage.reload();
       await aHomePage.waitForTimeout(2500);
       await aHomePage.goto('/progress');
       await aHomePage.getByRole('link', { name: new RegExp(student1) }).click();
+      // Wait for the page's sessions to load before reading it.
+      await expect(aHomePage.getByText(diagnoses.a1)).toBeVisible();
       const text = await aHomePage.locator('body').innerText();
       await shot(aHomePage, '4.4-a-student-1-progress');
       expect(text).toContain(diagnoses.a1);
@@ -785,9 +790,15 @@ test('pilot re-test checklist, 30 September 2026', async ({
   await check('4.5', 'A’s student list for a new session', async () => {
     await aHomePage.goto('/');
     await expect(
+      aHomePage.getByRole('button', { name: `Teach ${student1}` }),
+    ).toHaveCount(1);
+    await expect(
       aHomePage.getByRole('button', { name: `Teach ${student2}` }),
-    ).toBeVisible();
-    return 'The app records no assignment of students to preceptors, so the list shows every registered student (Student 2 and the seeded students too)';
+    ).toHaveCount(0);
+    await expect(
+      aHomePage.getByRole('button', { name: 'Teach Ahmed Khan' }),
+    ).toHaveCount(0);
+    return 'Each doctor has their own list: A sees only Student 1, the one student A added';
   });
   await check('4.6', 'PI dashboard shows all three sessions', async () => {
     await piPage.goto('/admin/sessions');
