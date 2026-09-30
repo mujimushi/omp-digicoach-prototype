@@ -36,7 +36,7 @@ test('E2E-12 a pearl saved for Pneumonia appears for "community acquired pneumon
   await page.getByLabel('In patients with').fill('hypoxia');
   await page.getByLabel('always check').fill('oxygen saturation');
   await page.getByLabel('First-line treatment is usually').fill('amoxicillin');
-  await page.getByLabel('Red flag').fill('confusion');
+  await page.getByLabel('Warning sign').fill('confusion');
   await page.getByRole('button', { name: 'Save as teaching pearl' }).click();
   await expect(page.getByRole('button', { name: 'Pearl saved' })).toBeVisible();
   await finishAndSave(page, 'Pneumonia');
@@ -60,7 +60,7 @@ test('E2E-12 a pearl saved for Pneumonia appears for "community acquired pneumon
   await expect(page.getByLabel('First-line treatment is usually')).toHaveValue(
     'amoxicillin',
   );
-  await expect(page.getByLabel('Red flag')).toHaveValue('confusion');
+  await expect(page.getByLabel('Warning sign')).toHaveValue('confusion');
   await finishAndSave(page, 'Community acquired pneumonia');
   await expectAllSent(page);
 

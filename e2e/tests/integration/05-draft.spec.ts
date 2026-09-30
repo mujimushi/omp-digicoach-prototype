@@ -14,7 +14,7 @@ test('E2E-05 (E2E-C3) a reload during Step 3 brings back the text and times', as
   await startSession(page, 'Fatima Rizvi');
   await nextStep(page, 2);
   await nextStep(page, 3);
-  await page.getByLabel('Red flag').fill('Sudden breathlessness');
+  await page.getByLabel('Warning sign').fill('Sudden breathlessness');
   await page.waitForTimeout(1_200);
 
   await page.reload();
@@ -22,7 +22,7 @@ test('E2E-05 (E2E-C3) a reload during Step 3 brings back the text and times', as
   await expect(
     page.getByRole('heading', { name: 'Step 3 of 5' }),
   ).toBeVisible();
-  await expect(page.getByLabel('Red flag')).toHaveValue(
+  await expect(page.getByLabel('Warning sign')).toHaveValue(
     'Sudden breathlessness',
   );
   // The countdown kept running across the reload instead of starting again.

@@ -135,7 +135,7 @@ const STRENGTHS = [
 
 const IMPROVEMENTS = [
   'review the chest X-ray systematically',
-  'check for red flags early',
+  'check for warning signs early',
   'the drug doses',
   'a broader differential',
   'documenting vital signs',

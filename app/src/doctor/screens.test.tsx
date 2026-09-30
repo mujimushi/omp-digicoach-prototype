@@ -282,7 +282,7 @@ describe('pearl banner on Step 3', () => {
     expect(
       screen.getByLabelText('First-line treatment is usually'),
     ).toHaveValue('Amoxicillin');
-    expect(screen.getByLabelText('Red flag')).toHaveValue('Sepsis');
+    expect(screen.getByLabelText('Warning sign')).toHaveValue('Sepsis');
     await waitFor(() =>
       expect(repository.outbox.map((i) => i.type)).toContain('pearl.use'),
     );
@@ -295,7 +295,7 @@ describe('pearl banner on Step 3', () => {
     const savePearl = vi.spyOn(repository, 'savePearl');
     renderDoctorApp({ path: '/session', repository, user: doctor });
 
-    await user.type(await screen.findByLabelText('Red flag'), 'Confusion');
+    await user.type(await screen.findByLabelText('Warning sign'), 'Confusion');
     await user.click(
       screen.getByRole('button', { name: 'Save as teaching pearl' }),
     );

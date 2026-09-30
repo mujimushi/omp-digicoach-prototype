@@ -23,7 +23,7 @@ test('E2E-08 a second doctor sees neither the first doctor’s sessions, pearls 
   await rateStep(first, 5);
   await nextStep(first, 2);
   await nextStep(first, 3);
-  await first.getByLabel('Red flag').fill('A teaching point only I see');
+  await first.getByLabel('Warning sign').fill('A teaching point only I see');
   await first.getByRole('button', { name: 'Save as teaching pearl' }).click();
   await expect(
     first.getByRole('button', { name: 'Pearl saved' }),

@@ -62,7 +62,7 @@ export const STEP3_TEMPLATES = [
     shortLabel: 'Treatment',
     placeholder: '___',
   },
-  { label: 'Red flag', shortLabel: 'Red flag', placeholder: '___' },
+  { label: 'Warning sign', shortLabel: 'Warning sign', placeholder: '___' },
 ] as const;
 
 export const STEPS = [
