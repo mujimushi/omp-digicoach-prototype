@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { createMemoryRepository } from '../data/memory-repository.ts';
 import { renderDoctorApp } from '../test/doctor-app.tsx';
-import { freshPhoneDb } from '../test/phone-db.ts';
 import {
   createPracticeRepository,
   PRACTICE_STUDENT_NAME,
@@ -71,21 +70,18 @@ describe('when the tour opens', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('checks the phone: undefined never opens, and a phone that saw it tells the server again', async () => {
-    const db = freshPhoneDb();
-    expect(await shouldOpenTour(undefined, db)).toBe(false);
-    expect(await shouldOpenTour('2026-09-01T08:00:00.000Z', db)).toBe(false);
-    expect(await shouldOpenTour(null, db)).toBe(true);
-    await db.setMeta('tourDoneAt', '2026-09-02T08:00:00.000Z');
-    expect(await shouldOpenTour(null, db)).toBe(false);
+  it('follows only the server’s record: null opens, a time or an old cached user never does', () => {
+    expect(shouldOpenTour(null)).toBe(true);
+    expect(shouldOpenTour('2026-09-01T08:00:00.000Z')).toBe(false);
+    expect(shouldOpenTour(undefined)).toBe(false);
   });
 });
 
 describe('welcome cards', () => {
-  it('Skip closes the tour and remembers it once', async () => {
+  it('Skip closes the tour, tells the server once, then reloads the user', async () => {
     const user = userEvent.setup();
     const store = fakeStore();
-    renderDoctorApp({
+    const { auth } = renderDoctorApp({
       path: '/',
       repository: realRepository(newDoctor.id),
       user: newDoctor,
@@ -96,6 +92,7 @@ describe('welcome cards', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(store.markDone).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(auth.refresh).toHaveBeenCalledTimes(1));
   });
 
   it('keeps every card to a title and one short line', async () => {

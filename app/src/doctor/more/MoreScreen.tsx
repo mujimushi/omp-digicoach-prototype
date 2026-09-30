@@ -10,7 +10,6 @@ import {
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { useAuth, useUser } from '../../auth/AuthProvider.tsx';
-import { InstallGuide } from '../../install/InstallGuide.tsx';
 import { useSyncStatus } from '../../offline/useSyncStatus.ts';
 import { ds } from '../../styles/tokens.ts';
 import { useTour } from '../../tour/useTour.ts';
@@ -154,7 +153,6 @@ export function MoreScreen() {
     <>
       <ScreenHeader title="More" subtitle={user.name} />
       <div style={{ flex: 1, padding: '0 16px 24px' }}>
-        <InstallGuide dismissible={false} />
         {problems.length > 0 && (
           <Card accent={ds.red} style={{ marginBottom: 12 }}>
             <h2

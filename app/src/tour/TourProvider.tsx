@@ -6,7 +6,7 @@ import {
   useState,
 } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { useUser } from '../auth/AuthProvider.tsx';
+import { useAuth, useUser } from '../auth/AuthProvider.tsx';
 import type { Repository } from '../data/repository.ts';
 import { CoachMarks } from './CoachMarks.tsx';
 import { createPracticeRepository } from './practice-repository.ts';
@@ -21,11 +21,12 @@ import { WelcomeCards } from './WelcomeCards.tsx';
 
 export type TourStore = {
   shouldOpen: (tourCompletedAt: string | null | undefined) => Promise<boolean>;
+  /** Records on the server that the tour is done. Rejects when the server can't be reached. */
   markDone: () => Promise<void>;
 };
 
-const phoneAndServer: TourStore = {
-  shouldOpen: (tourCompletedAt) => shouldOpenTour(tourCompletedAt),
+const server: TourStore = {
+  shouldOpen: async (tourCompletedAt) => shouldOpenTour(tourCompletedAt),
   markDone: () => markTourDone(),
 };
 
@@ -35,13 +36,14 @@ const phoneAndServer: TourStore = {
  */
 export function TourProvider({
   children,
-  store = phoneAndServer,
+  store = server,
 }: {
   children: ReactNode;
   /** Tests pass their own. */
   store?: TourStore;
 }) {
   const user = useUser();
+  const { refresh } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [stage, setStage] = useState<TourStage>('off');
@@ -81,9 +83,10 @@ export function TourProvider({
     const leavingPractice = practiceRepository !== null;
     setStage('off');
     setPracticeRepository(null);
-    void store.markDone();
+    // Reload the user, so the copy kept for opening without signal also says the tour is done.
+    void store.markDone().then(refresh, () => undefined);
     if (leavingPractice) navigate('/', { replace: true });
-  }, [practiceRepository, store, navigate]);
+  }, [practiceRepository, store, refresh, navigate]);
 
   const value = useMemo<TourContextValue>(
     () => ({
