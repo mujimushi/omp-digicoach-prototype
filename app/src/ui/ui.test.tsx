@@ -176,6 +176,20 @@ describe('ChipGroup', () => {
 });
 
 describe('TextField', () => {
+  it('turns off capitals, autocorrect and spell check on a username or password', () => {
+    render(
+      <>
+        <TextField label="Username" value="" onChange={() => {}} credential />
+        <TextField label="Notes" value="" onChange={() => {}} />
+      </>,
+    );
+    const username = screen.getByLabelText('Username');
+    expect(username).toHaveAttribute('autocapitalize', 'none');
+    expect(username).toHaveAttribute('autocorrect', 'off');
+    expect(username).toHaveAttribute('spellcheck', 'false');
+    expect(screen.getByLabelText('Notes')).not.toHaveAttribute('autocorrect');
+  });
+
   it('labels the input and reports typing', async () => {
     const user = userEvent.setup();
     function Field() {

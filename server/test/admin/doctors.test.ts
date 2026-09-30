@@ -72,7 +72,7 @@ describe('create doctor', () => {
       mustChangePassword: true,
       active: true,
     });
-    expect(body.temporaryPassword).toMatch(/^[a-z2-9]{4}(-[a-z2-9]{4}){3}$/);
+    expect(body.temporaryPassword).toMatch(/^[a-z]{3,6}\d{4}$/);
 
     const [row] = await db
       .select()

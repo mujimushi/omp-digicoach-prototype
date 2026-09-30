@@ -1,13 +1,10 @@
-/** Lower-case letters and digits without look-alikes, as the server's generator uses. */
-const READABLE = 'abcdefghjkmnpqrstuvwxyz23456789';
+import { makeTemporaryPassword } from '@omp/shared';
 
-/** Four groups of four readable characters, such as k7mq-3xrp-9dwt-2hvf. The server checks it again. */
+/** A word and four digits, such as river4827, as the server makes them. The server checks it again. */
 export function generateReadablePassword(
   random: (n: number) => number = secureRandom,
 ): string {
-  const group = () =>
-    Array.from({ length: 4 }, () => READABLE[random(READABLE.length)]).join('');
-  return [group(), group(), group(), group()].join('-');
+  return makeTemporaryPassword(random);
 }
 
 function secureRandom(n: number): number {

@@ -93,6 +93,7 @@ export function ChangePasswordScreen() {
                   : 'Current password'
               }
               type="password"
+              credential
               value={current}
               onChange={setCurrent}
               autoComplete="current-password"
@@ -101,6 +102,7 @@ export function ChangePasswordScreen() {
             <TextField
               label="New password"
               type="password"
+              credential
               value={next}
               onChange={setNext}
               autoComplete="new-password"
@@ -115,6 +117,7 @@ export function ChangePasswordScreen() {
             <TextField
               label="New password again"
               type="password"
+              credential
               value={repeat}
               onChange={setRepeat}
               autoComplete="new-password"

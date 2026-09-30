@@ -1,3 +1,4 @@
+import { TEMPORARY_PASSWORD_WORDS } from '@omp/shared';
 import { describe, expect, it } from 'vitest';
 import { lockDurationMs } from '../../src/services/auth/attempts.ts';
 import {
@@ -37,11 +38,11 @@ describe('checkPasswordRules', () => {
 });
 
 describe('generateTemporaryPassword', () => {
-  it('makes four groups of four readable characters', () => {
+  it('makes one lower-case word and four digits, such as river4827', () => {
     for (let i = 0; i < 200; i += 1) {
       const password = generateTemporaryPassword();
-      expect(password).toMatch(/^[a-hjkmnp-z2-9]{4}(-[a-hjkmnp-z2-9]{4}){3}$/);
-      expect(password).not.toMatch(/[01ilo]/);
+      expect(password).toMatch(/^[a-z]{3,6}\d{4}$/);
+      expect(TEMPORARY_PASSWORD_WORDS).toContain(password.slice(0, -4));
     }
   });
 

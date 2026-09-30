@@ -23,6 +23,8 @@ export type TextFieldProps = {
   autoFocus?: boolean;
   inputMode?: 'text' | 'numeric' | 'search';
   autoCapitalize?: string;
+  /** A username or password: no capital letters, autocorrect or spell check. */
+  credential?: boolean;
 };
 
 export function TextField({
@@ -46,6 +48,7 @@ export function TextField({
   autoFocus,
   inputMode,
   autoCapitalize,
+  credential = false,
 }: TextFieldProps) {
   const id = useId();
   const hintId = `${id}-hint`;
@@ -64,7 +67,8 @@ export function TextField({
     autoFocus,
     autoComplete,
     inputMode,
-    autoCapitalize,
+    autoCapitalize: credential ? 'none' : autoCapitalize,
+    ...(credential ? { autoCorrect: 'off', spellCheck: false } : {}),
     'aria-invalid': error ? true : undefined,
     'aria-describedby': describedBy || undefined,
   };

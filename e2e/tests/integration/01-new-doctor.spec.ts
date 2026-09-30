@@ -21,7 +21,7 @@ test('E2E-01 (E2E-D1) the admin adds a doctor; the doctor logs in with the tempo
     (
       await admin.page.getByTestId('temporary-password').textContent()
     )?.trim() ?? '';
-  expect(temporaryPassword).toMatch(/^[a-z2-9]{4}(-[a-z2-9]{4}){3}$/);
+  expect(temporaryPassword).toMatch(/^[a-z]{3,6}\d{4}$/);
 
   const phone = await emptyPhone(browser, testInfo);
   await firstLoginOnPhone(

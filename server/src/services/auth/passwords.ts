@@ -1,6 +1,6 @@
 import { randomInt } from 'node:crypto';
 import { hash, verify } from '@node-rs/argon2';
-import { LIMITS } from '@omp/shared';
+import { LIMITS, makeTemporaryPassword } from '@omp/shared';
 
 /** OWASP's recommended Argon2id settings. Argon2id is the library's default algorithm. */
 const ARGON2_SETTINGS = { memoryCost: 19456, timeCost: 2, parallelism: 1 };
@@ -72,14 +72,10 @@ export function checkPasswordRules(
   return null;
 }
 
-/** Lower-case letters and digits without look-alikes such as 0, o, 1, l and i. */
-const READABLE = 'abcdefghjkmnpqrstuvwxyz23456789';
-
-/** Four groups of four readable characters, such as k7mq-3xrp-9dwt-2hvf. */
+/**
+ * A short common word and four digits, such as river4827, easy to read out and type. It works only
+ * until the first login, which must replace it, and logins are rate-limited.
+ */
 export function generateTemporaryPassword(): string {
-  const group = () =>
-    Array.from({ length: 4 }, () => READABLE[randomInt(READABLE.length)]).join(
-      '',
-    );
-  return [group(), group(), group(), group()].join('-');
+  return makeTemporaryPassword((n) => randomInt(n));
 }

@@ -44,7 +44,7 @@ export function LoginScreen() {
     setBusy(true);
     setError(null);
     try {
-      const user = await login(username, password);
+      const user = await login(username.trim(), password);
       const from = (location.state as { from?: string } | null)?.from;
       const wanted =
         from && !user.mustChangePassword && from !== '/login'
@@ -135,7 +135,7 @@ export function LoginScreen() {
               value={username}
               onChange={setUsername}
               autoComplete="username"
-              autoCapitalize="none"
+              credential
               icon={<User size={16} color={ds.txMuted} />}
               required
             />
@@ -145,6 +145,7 @@ export function LoginScreen() {
               value={password}
               onChange={setPassword}
               autoComplete="current-password"
+              credential
               icon={<Lock size={16} color={ds.txMuted} />}
               required
             />

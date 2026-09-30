@@ -257,10 +257,10 @@ export function DoctorFormScreen() {
           />
           <TextField
             label="Username"
+            credential
             value={username}
             onChange={setUsername}
             maxLength={LIMITS.usernameMax}
-            autoCapitalize="none"
             hint="3–30 lower-case letters, digits, dots or underscores, such as dr.sana"
             error={touched ? (errors.username ?? null) : null}
             required
@@ -326,6 +326,7 @@ export function DoctorFormScreen() {
             <div>
               <TextField
                 label="Temporary password (optional)"
+                credential
                 value={temporaryPassword}
                 onChange={setTemporaryPassword}
                 hint={`Leave empty for a generated one. At least ${LIMITS.passwordMin} characters.`}

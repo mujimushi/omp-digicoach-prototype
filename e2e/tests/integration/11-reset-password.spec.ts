@@ -44,7 +44,7 @@ test('E2E-11 the admin resets a password; the doctor’s old login stops; the te
     (
       await admin.page.getByTestId('temporary-password').textContent()
     )?.trim() ?? '';
-  expect(temporary).toMatch(/^[a-z2-9]{4}(-[a-z2-9]{4}){3}$/);
+  expect(temporary).toMatch(/^[a-z]{3,6}\d{4}$/);
 
   expect((await phone.context.request.get('/api/me')).status()).toBe(401);
   await phone.page.reload();

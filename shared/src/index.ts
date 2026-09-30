@@ -1,5 +1,10 @@
 export * from './constants.ts';
 export { findPearlForAnswer, pearlMatchesAnswer } from './rules/pearl-match.ts';
+export {
+  makeTemporaryPassword,
+  TEMPORARY_PASSWORD_PATTERN,
+  TEMPORARY_PASSWORD_WORDS,
+} from './rules/temporary-password.ts';
 export * from './schemas/admin.ts';
 export * from './schemas/auth.ts';
 export {

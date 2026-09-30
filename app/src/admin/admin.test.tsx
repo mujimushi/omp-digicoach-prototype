@@ -100,7 +100,7 @@ describe('doctor form', () => {
     const generated = (
       screen.getByLabelText('Temporary password (optional)') as HTMLInputElement
     ).value;
-    expect(generated).toMatch(/^[a-z2-9]{4}(-[a-z2-9]{4}){3}$/);
+    expect(generated).toMatch(/^[a-z]{3,6}\d{4}$/);
 
     await user.click(screen.getByRole('button', { name: 'Add doctor' }));
     expect(await screen.findByTestId('temporary-password')).toHaveTextContent(
@@ -231,12 +231,14 @@ describe('tables and charts', () => {
 });
 
 describe('generateReadablePassword', () => {
-  it('uses four groups of readable characters', () => {
+  it('makes one lower-case word and four digits, such as river4827', () => {
     for (let i = 0; i < 100; i += 1) {
-      expect(generateReadablePassword()).toMatch(
-        /^[a-hjkmnp-z2-9]{4}(-[a-hjkmnp-z2-9]{4}){3}$/,
-      );
+      expect(generateReadablePassword()).toMatch(/^[a-z]{3,6}\d{4}$/);
     }
+    // The digits keep their leading zeros.
+    expect(generateReadablePassword((n) => (n === 10_000 ? 42 : 1))).toBe(
+      'river0042',
+    );
   });
 });
 
