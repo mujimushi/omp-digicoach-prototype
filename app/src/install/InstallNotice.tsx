@@ -49,7 +49,7 @@ export function installSituation(env: InstallEnvironment): InstallSituation {
 }
 
 const text = {
-  fontSize: 17,
+  fontSize: 18,
   fontWeight: 700,
   lineHeight: 1.4,
   margin: 0,
@@ -86,7 +86,7 @@ export function InstallNotice({
       >
         <TriangleAlert size={24} style={{ flexShrink: 0, marginTop: 2 }} />
         <div>
-          <p style={{ ...text, fontSize: 18, marginBottom: 6 }}>
+          <p style={{ ...text, fontSize: 19, marginBottom: 6 }}>
             You are not in Safari.
           </p>
           <p style={text}>

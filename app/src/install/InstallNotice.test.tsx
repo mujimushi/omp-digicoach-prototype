@@ -71,6 +71,13 @@ describe('InstallNotice', () => {
     expect(alert).toHaveTextContent('Add to Home Screen');
   });
 
+  it('uses large, bold text: 18px or more, weight 600 or more', () => {
+    render(<InstallNotice environment={env(SAFARI)} />);
+    const text = screen.getByText(/Open this app in Safari/);
+    expect(Number.parseFloat(text.style.fontSize)).toBeGreaterThanOrEqual(18);
+    expect(Number(text.style.fontWeight)).toBeGreaterThanOrEqual(600);
+  });
+
   it('tells Android users to use the Chrome menu', () => {
     render(<InstallNotice environment={env(ANDROID)} />);
     expect(
