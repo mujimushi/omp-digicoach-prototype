@@ -1,4 +1,4 @@
-import { STEPS } from '@omp/shared';
+import { RATED_STEPS } from '@omp/shared';
 import { useQuery } from '@tanstack/react-query';
 import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts';
 import { adminApi, adminKeys } from '../api.ts';
@@ -95,8 +95,9 @@ export function OverviewScreen() {
             Average rating per step this month
           </caption>
           <tbody>
-            {STEPS.map((step, i) => {
-              const value = stats.avgRatingPerStepThisMonth[i] ?? null;
+            {RATED_STEPS.map((step) => {
+              const value =
+                stats.avgRatingPerStepThisMonth[step.id - 1] ?? null;
               return (
                 <tr key={step.id}>
                   <th

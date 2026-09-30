@@ -2,7 +2,7 @@ import {
   LEVEL_LABELS,
   LEVELS,
   type Level,
-  STEPS,
+  RATED_STEPS,
   type StudentUpdate,
   YEAR_LABELS,
   YEARS,
@@ -107,11 +107,11 @@ export function StudentDetailScreen() {
       >
         <Figure label="Sessions" value={String(summary.sessions)} />
         <Figure label="Doctors" value={String(summary.doctors)} />
-        {STEPS.map((step, i) => (
+        {RATED_STEPS.map((step) => (
           <Figure
             key={step.id}
             label={`Step ${step.id} average`}
-            value={formatAverage(summary.avgRatingPerStep[i] ?? null)}
+            value={formatAverage(summary.avgRatingPerStep[step.id - 1] ?? null)}
           />
         ))}
       </div>

@@ -1,5 +1,6 @@
 import {
   type AuditEntry,
+  isRatedStep,
   type Student,
   type StudentDetail,
   StudentInput,
@@ -50,8 +51,9 @@ function toSummaryRow(row: Record<string, unknown>): StudentSummaryRow {
     year: (row.year as StudentSummaryRow['year']) ?? null,
     sessions: toNumber(row.sessions),
     doctors: toNumber(row.doctors),
+    // Steps no longer rated keep their stored ratings, but stay out of every average.
     avgRatingPerStep: [row.r1, row.r2, row.r3, row.r4, row.r5].map(
-      toAverage,
+      (value, i) => (isRatedStep(i + 1) ? toAverage(value) : null),
     ) as StudentSummaryRow['avgRatingPerStep'],
     lastSessionAt: toIso(row.last_session_at),
   };

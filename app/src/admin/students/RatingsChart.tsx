@@ -1,4 +1,4 @@
-import { type RatingsPoint, STEPS } from '@omp/shared';
+import { RATED_STEPS, type RatingsPoint, ratedValues } from '@omp/shared';
 import {
   CartesianGrid,
   Legend,
@@ -11,12 +11,15 @@ import {
 import { ChartBox, STEP_COLOURS } from '../components.tsx';
 import { formatDay } from '../format.ts';
 
-/** Ratings per step over time, one line per step, with the same numbers in a table for screen readers. */
+/**
+ * Ratings per rated step over time, one line per step, with the same numbers in a table for screen
+ * readers. Steps that are no longer rated are left out, including ratings stored for them earlier.
+ */
 export function RatingsChart({ points }: { points: readonly RatingsPoint[] }) {
   const data = points.map((p) => ({
     date: formatDay(p.startedAt),
     ...Object.fromEntries(
-      p.ratings.map((rating, i) => [`step${i + 1}`, rating]),
+      RATED_STEPS.map((step) => [`step${step.id}`, p.ratings[step.id - 1]]),
     ),
   }));
   return (
@@ -34,13 +37,13 @@ export function RatingsChart({ points }: { points: readonly RatingsPoint[] }) {
             />
             <Tooltip />
             <Legend />
-            {STEPS.map((step, i) => (
+            {RATED_STEPS.map((step) => (
               <Line
                 key={step.id}
                 type="monotone"
                 dataKey={`step${step.id}`}
                 name={`Step ${step.id}`}
-                stroke={STEP_COLOURS[i] ?? '#735596'}
+                stroke={STEP_COLOURS[step.id - 1] ?? '#735596'}
                 strokeWidth={2}
                 connectNulls
                 dot
@@ -55,7 +58,7 @@ export function RatingsChart({ points }: { points: readonly RatingsPoint[] }) {
         <thead>
           <tr>
             <th scope="col">Date</th>
-            {STEPS.map((step) => (
+            {RATED_STEPS.map((step) => (
               <th key={step.id} scope="col">
                 Step {step.id}
               </th>
@@ -66,8 +69,8 @@ export function RatingsChart({ points }: { points: readonly RatingsPoint[] }) {
           {points.map((p) => (
             <tr key={p.sessionId}>
               <th scope="row">{formatDay(p.startedAt)}</th>
-              {p.ratings.map((rating, i) => (
-                <td key={STEPS[i]?.id}>{rating ?? 'not rated'}</td>
+              {ratedValues(p.ratings).map((rating, i) => (
+                <td key={RATED_STEPS[i]?.id}>{rating ?? 'not rated'}</td>
               ))}
             </tr>
           ))}

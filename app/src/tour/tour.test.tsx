@@ -196,7 +196,7 @@ describe('practice session', () => {
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Got it' }));
     expect(
-      await screen.findByText('Rate the learner once per step.'),
+      await screen.findByText('Rate the learner on this step.'),
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Got it' }));
     expect(

@@ -1,11 +1,18 @@
-import { CASE_TYPE_LABELS, type SessionListRow } from '@omp/shared';
+import {
+  CASE_TYPE_LABELS,
+  ratedStepsText,
+  ratedValues,
+  type SessionListRow,
+} from '@omp/shared';
 import { Link } from 'react-router';
 import { ds } from '../../styles/tokens.ts';
 import type { Column } from '../components.tsx';
 import { formatDateTime, formatSeconds } from '../format.ts';
 
 const ratingsText = (row: SessionListRow) =>
-  row.ratings.map((r) => r ?? '–').join(' · ');
+  ratedValues(row.ratings)
+    .map((r) => r ?? '–')
+    .join(' · ');
 
 /** Session table columns, shared by the sessions list, doctor and student pages. */
 export function sessionColumns(
@@ -66,7 +73,11 @@ export function sessionColumns(
       sortValue: (r) => r.overtimeSeconds,
       render: (r) => formatSeconds(r.overtimeSeconds),
     },
-    { key: 'ratings', label: 'Ratings, steps 1–5', render: ratingsText },
+    {
+      key: 'ratings',
+      label: `Ratings, ${ratedStepsText()}`,
+      render: ratingsText,
+    },
     {
       key: 'useful',
       label: 'Useful',

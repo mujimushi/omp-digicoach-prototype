@@ -2,8 +2,8 @@ import {
   DEPARTMENT_LABELS,
   DESIGNATION_LABELS,
   LEVEL_LABELS,
+  RATED_STEPS,
   RATING_LABELS,
-  STEPS,
   type TaughtStudentRow,
   YEAR_LABELS,
 } from '@omp/shared';
@@ -86,7 +86,7 @@ export function RatingSpreadTable({
         </tr>
       </thead>
       <tbody>
-        {STEPS.map((step, i) => (
+        {RATED_STEPS.map((step) => (
           <tr key={step.id}>
             <th
               scope="row"
@@ -94,7 +94,7 @@ export function RatingSpreadTable({
             >
               {step.id}. {step.name}
             </th>
-            {spread[i]?.counts.map((count, j) => (
+            {spread[step.id - 1]?.counts.map((count, j) => (
               <td
                 key={RATING_LABELS[j]}
                 style={{ textAlign: 'right', padding: 6 }}
@@ -103,7 +103,7 @@ export function RatingSpreadTable({
               </td>
             ))}
             <td style={{ textAlign: 'right', padding: 6 }}>
-              {spread[i]?.unrated}
+              {spread[step.id - 1]?.unrated}
             </td>
           </tr>
         ))}
@@ -177,7 +177,7 @@ export function DoctorDetailScreen() {
           value={formatSeconds(activity.avgOvertimeSeconds)}
         />
         <Figure
-          label="All five steps rated"
+          label="All rated steps done"
           value={formatShare(activity.allStepsRatedShare)}
         />
         <Figure

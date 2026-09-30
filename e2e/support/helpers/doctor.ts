@@ -1,3 +1,4 @@
+import { isRatedStep } from '@omp/shared';
 import { expect, type Page } from '@playwright/test';
 
 /** From the student list, opens session setup for a student and starts a session. */
@@ -145,13 +146,16 @@ export async function outboxCount(page: Page): Promise<number> {
   );
 }
 
-/** Goes through all five steps from Step 1, rating each, then taps Finish. */
+/**
+ * Goes through all five steps from Step 1, rating each rated step with the given stars, then taps
+ * Finish. Values for steps that have no rating are ignored.
+ */
 export async function rateAllAndFinish(
   page: Page,
   ratings: readonly (1 | 2 | 3 | 4 | 5)[],
 ): Promise<void> {
   for (const [index, stars] of ratings.entries()) {
-    await rateStep(page, stars);
+    if (isRatedStep(index + 1)) await rateStep(page, stars);
     if (index < 4) await nextStep(page, index + 2);
   }
   await page.getByRole('button', { name: 'Finish' }).click();

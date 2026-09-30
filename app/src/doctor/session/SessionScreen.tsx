@@ -1,4 +1,4 @@
-import { STEPS, type StepId } from '@omp/shared';
+import { isRatedStep, STEPS, type StepId } from '@omp/shared';
 import {
   BookOpen,
   Check,
@@ -204,7 +204,7 @@ export function SessionScreen() {
         }}
       >
         <StepBody draft={draft} update={update} />
-        <StepRating draft={draft} update={update} />
+        {isRatedStep(step) && <StepRating draft={draft} update={update} />}
       </div>
       <div
         style={{

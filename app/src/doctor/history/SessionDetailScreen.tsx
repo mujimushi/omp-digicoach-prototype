@@ -1,4 +1,5 @@
 import {
+  isRatedStep,
   type SessionStep,
   STEP3_TEMPLATES,
   STEPS,
@@ -204,7 +205,7 @@ export function SessionDetailScreen() {
               </span>
             </div>
             <div style={{ margin: '6px 0' }}>
-              <StarsText rating={step.rating} />
+              {isRatedStep(step.step) && <StarsText rating={step.rating} />}
             </div>
             <StepText step={step} />
           </Card>

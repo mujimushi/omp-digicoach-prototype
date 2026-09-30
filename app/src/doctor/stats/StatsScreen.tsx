@@ -1,4 +1,4 @@
-import { RATING_LABELS, STEPS } from '@omp/shared';
+import { RATED_STEPS, RATING_LABELS, ratedStepsText } from '@omp/shared';
 import { Clock, Star, Timer, TimerReset } from 'lucide-react';
 import { ds } from '../../styles/tokens.ts';
 import { Card } from '../../ui/Card.tsx';
@@ -46,12 +46,12 @@ export function StatsScreen() {
       colour: ds.coral,
     },
     {
-      label: 'All five steps rated',
+      label: 'All rated steps done',
       value:
         stats.allStepsRatedShare === null
           ? '–'
           : `${Math.round(stats.allStepsRatedShare * 100)}%`,
-      note: 'Of your sessions',
+      note: `Of your sessions, ${ratedStepsText()}`,
       Icon: Star,
       colour: ds.gold,
     },
@@ -103,8 +103,8 @@ export function StatsScreen() {
           >
             Average rating per step
           </h2>
-          {STEPS.map((step, i) => {
-            const value = stats.avgRatingPerStep[i] ?? null;
+          {RATED_STEPS.map((step) => {
+            const value = stats.avgRatingPerStep[step.id - 1] ?? null;
             return (
               <div key={step.id} style={{ marginBottom: 8 }}>
                 <div
@@ -134,7 +134,7 @@ export function StatsScreen() {
                       height: '100%',
                       borderRadius: 4,
                       width: `${value === null ? 0 : (value / 5) * 100}%`,
-                      background: STEP_COLOURS[i],
+                      background: STEP_COLOURS[step.id - 1],
                     }}
                   />
                 </div>

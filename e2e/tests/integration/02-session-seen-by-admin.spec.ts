@@ -1,4 +1,4 @@
-import { RATING_LABELS } from '@omp/shared';
+import { isRatedStep, RATING_LABELS } from '@omp/shared';
 import { expect, test } from '../../support/fixtures.ts';
 import {
   expectAllSent,
@@ -40,9 +40,10 @@ test('E2E-02 (E2E-B1) a doctor adds a student and records a session; History and
   await page.getByRole('link', { name: 'History' }).click();
   await page.getByRole('link', { name: new RegExp(diagnosis) }).click();
   for (const [index, stars] of ratings.entries()) {
-    await expect(page.getByTestId(`step-${index + 1}`)).toContainText(
-      RATING_LABELS[stars - 1] ?? '',
-    );
+    const card = page.getByTestId(`step-${index + 1}`);
+    if (isRatedStep(index + 1))
+      await expect(card).toContainText(RATING_LABELS[stars - 1] ?? '');
+    else await expect(card).not.toContainText('Not rated');
   }
   const appTime = await page
     .locator('dt', { hasText: /^Teaching time$/ })
@@ -64,11 +65,14 @@ test('E2E-02 (E2E-B1) a doctor adds a student and records a session; History and
     admin.page.getByRole('heading', { name: diagnosis }),
   ).toBeVisible();
   for (const [index, stars] of ratings.entries()) {
-    await expect(
-      admin.page.getByRole('region', {
-        name: new RegExp(`^Step ${index + 1}:`),
-      }),
-    ).toContainText(`${stars} of 5, ${RATING_LABELS[stars - 1]}`);
+    const region = admin.page.getByRole('region', {
+      name: new RegExp(`^Step ${index + 1}:`),
+    });
+    if (isRatedStep(index + 1))
+      await expect(region).toContainText(
+        `${stars} of 5, ${RATING_LABELS[stars - 1]}`,
+      );
+    else await expect(region).not.toContainText('of 5');
   }
   await expect(
     admin.page.getByRole('row', { name: /^Teaching time/ }),

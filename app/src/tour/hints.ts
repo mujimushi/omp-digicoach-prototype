@@ -19,7 +19,7 @@ export const HINTS: readonly Hint[] = [
     text: 'One minute for all five steps. Tap to pause.',
     doneBy: 'ack',
   },
-  { id: 'rating', text: 'Rate the learner once per step.', doneBy: 'ack' },
+  { id: 'rating', text: 'Rate the learner on this step.', doneBy: 'ack' },
   { id: 'next', text: 'Go through the five steps.', doneBy: 'tap' },
   { id: 'finish', text: 'Finish when you’re done.', doneBy: 'tap' },
   {

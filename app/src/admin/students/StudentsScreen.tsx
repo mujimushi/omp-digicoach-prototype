@@ -1,5 +1,6 @@
 import {
   LEVEL_LABELS,
+  RATED_STEP_IDS,
   STUDENT_SORTS,
   type StudentSummaryRow,
   YEAR_LABELS,
@@ -53,12 +54,12 @@ const COLUMNS: Column<StudentSummaryRow>[] = [
     align: 'right',
     render: (r) => r.doctors,
   },
-  ...[0, 1, 2, 3, 4].map(
-    (i): Column<StudentSummaryRow> => ({
-      key: `step${i + 1}`,
-      label: `Step ${i + 1}`,
+  ...RATED_STEP_IDS.map(
+    (id): Column<StudentSummaryRow> => ({
+      key: `step${id}`,
+      label: `Step ${id}`,
       align: 'right',
-      render: (r) => formatAverage(r.avgRatingPerStep[i] ?? null),
+      render: (r) => formatAverage(r.avgRatingPerStep[id - 1] ?? null),
     }),
   ),
   {

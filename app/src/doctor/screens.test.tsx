@@ -188,6 +188,27 @@ describe('session step rating', () => {
       await screen.findAllByRole('group', { name: /Rate Step/ }),
     ).toHaveLength(1);
   });
+
+  it('has no rating on step 3, Teach General Rule, but keeps its teaching points', async () => {
+    const repository = repositoryWith();
+    const now = Date.now();
+    await repository.saveDraft(
+      draftAt(now, (d) => ({
+        ...d,
+        timer: goToStep(goToStep(d.timer, 2, now), 3, now),
+      })),
+    );
+    renderDoctorApp({ path: '/session', repository, user: doctor });
+    expect(
+      await screen.findByRole('heading', { name: 'Step 3 of 5' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('One important thing to remember is'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('group', { name: /Rate Step/ }),
+    ).not.toBeInTheDocument();
+  });
 });
 
 describe('pearl banner on Step 3', () => {

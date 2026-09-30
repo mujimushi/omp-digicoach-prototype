@@ -1,4 +1,4 @@
-import type { OverviewStats } from '@omp/shared';
+import { isRatedStep, type OverviewStats } from '@omp/shared';
 import { sql } from 'drizzle-orm';
 import type { Db } from '../../db/client.ts';
 import { TZ, toAverage, toNumber } from './sql.ts';
@@ -44,8 +44,11 @@ export async function getOverview(db: Db, now: Date): Promise<OverviewStats> {
     null,
     null,
   ] as OverviewStats['avgRatingPerStepThisMonth'];
-  for (const entry of ratings.rows)
-    perStep[toNumber(entry.step) - 1] = toAverage(entry.average);
+  // Steps no longer rated keep their stored ratings, but stay out of every average.
+  for (const entry of ratings.rows) {
+    const step = toNumber(entry.step);
+    if (isRatedStep(step)) perStep[step - 1] = toAverage(entry.average);
+  }
 
   return {
     activeDoctors: toNumber(row.active_doctors),

@@ -1,4 +1,4 @@
-import { RATING_LABELS, STEPS } from '@omp/shared';
+import { RATING_LABELS, ratedStepsText, STEPS } from '@omp/shared';
 import { Logo } from '../../layout/Logo.tsx';
 import { ds } from '../../styles/tokens.ts';
 import { Card } from '../../ui/Card.tsx';
@@ -82,6 +82,9 @@ export function AboutScreen() {
           >
             Rating scale
           </h2>
+          <p style={{ fontSize: 14, color: ds.txB, margin: '0 0 8px' }}>
+            You rate the learner on {ratedStepsText()}.
+          </p>
           <ol style={{ margin: 0, paddingLeft: 20 }}>
             {RATING_LABELS.map((label) => (
               <li

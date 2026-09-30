@@ -1,14 +1,15 @@
-import type { TeachingSession } from '@omp/shared';
+import { isRatedStep, type TeachingSession } from '@omp/shared';
 
 export type DoctorStats = {
   total: number;
   thisWeek: number;
   avgTeachingSeconds: number | null;
   avgOvertimeSeconds: number | null;
-  /** Average rating per step, over the sessions that rated it. */
+  /** Average rating per step, over the sessions that rated it. Null for steps not rated. */
   avgRatingPerStep: (number | null)[];
   /** Monday first. */
   perWeekday: number[];
+  /** Share of sessions with every rated step rated. */
   allStepsRatedShare: number | null;
 };
 
@@ -43,18 +44,23 @@ export function computeStats(
     avgTeachingSeconds: average(sessions.map((s) => s.teachingSeconds)),
     avgOvertimeSeconds: average(sessions.map((s) => s.overtimeSeconds)),
     avgRatingPerStep: [0, 1, 2, 3, 4].map((i) =>
-      average(
-        sessions.flatMap((s) => {
-          const rating = s.steps[i]?.rating;
-          return rating === null || rating === undefined ? [] : [rating];
-        }),
-      ),
+      !isRatedStep(i + 1)
+        ? null
+        : average(
+            sessions.flatMap((s) => {
+              const rating = s.steps[i]?.rating;
+              return rating === null || rating === undefined ? [] : [rating];
+            }),
+          ),
     ),
     perWeekday,
     allStepsRatedShare:
       sessions.length === 0
         ? null
-        : sessions.filter((s) => s.steps.every((step) => step.rating !== null))
-            .length / sessions.length,
+        : sessions.filter((s) =>
+            s.steps.every(
+              (step) => !isRatedStep(step.step) || step.rating !== null,
+            ),
+          ).length / sessions.length,
   };
 }

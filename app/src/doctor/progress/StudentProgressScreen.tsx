@@ -1,4 +1,4 @@
-import { STEPS } from '@omp/shared';
+import { isRatedStep, RATED_STEPS } from '@omp/shared';
 import { User } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import { ds } from '../../styles/tokens.ts';
@@ -25,7 +25,9 @@ export function StudentProgressScreen() {
   const student = query.data?.student;
   const sessions = query.data?.sessions ?? [];
   const ratings = sessions.flatMap((s) =>
-    s.steps.flatMap((step) => (step.rating === null ? [] : [step.rating])),
+    s.steps.flatMap((step) =>
+      step.rating === null || !isRatedStep(step.step) ? [] : [step.rating],
+    ),
   );
   const average = ratings.length
     ? ratings.reduce((a, b) => a + b, 0) / ratings.length
@@ -125,7 +127,7 @@ export function StudentProgressScreen() {
                   >
                     Date
                   </th>
-                  {STEPS.map((step) => (
+                  {RATED_STEPS.map((step) => (
                     <th
                       key={step.id}
                       scope="col"
@@ -160,19 +162,21 @@ export function StudentProgressScreen() {
                     >
                       {formatShortDate(session.startedAt)}
                     </th>
-                    {session.steps.map((step) => (
-                      <td
-                        key={step.step}
-                        style={{
-                          textAlign: 'center',
-                          padding: 4,
-                          color: ds.warmDk,
-                          fontWeight: 700,
-                        }}
-                      >
-                        {step.rating ?? '–'}
-                      </td>
-                    ))}
+                    {session.steps
+                      .filter((step) => isRatedStep(step.step))
+                      .map((step) => (
+                        <td
+                          key={step.step}
+                          style={{
+                            textAlign: 'center',
+                            padding: 4,
+                            color: ds.warmDk,
+                            fontWeight: 700,
+                          }}
+                        >
+                          {step.rating ?? '–'}
+                        </td>
+                      ))}
                   </tr>
                 ))}
               </tbody>

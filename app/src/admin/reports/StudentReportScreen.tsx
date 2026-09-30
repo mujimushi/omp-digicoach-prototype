@@ -1,4 +1,9 @@
-import { LEVEL_LABELS, STEPS, YEAR_LABELS } from '@omp/shared';
+import {
+  LEVEL_LABELS,
+  RATED_STEPS,
+  ratedValues,
+  YEAR_LABELS,
+} from '@omp/shared';
 import { useQuery } from '@tanstack/react-query';
 import { Printer } from 'lucide-react';
 import { useId } from 'react';
@@ -128,11 +133,13 @@ export function StudentReportScreen() {
           <Figure label="Sessions in range" value={String(sessions.length)} />
           <Figure label="Sessions in total" value={String(summary.sessions)} />
           <Figure label="Doctors in total" value={String(summary.doctors)} />
-          {STEPS.map((step, i) => (
+          {RATED_STEPS.map((step) => (
             <Figure
               key={step.id}
               label={`Step ${step.id} average, all sessions`}
-              value={formatAverage(summary.avgRatingPerStep[i] ?? null)}
+              value={formatAverage(
+                summary.avgRatingPerStep[step.id - 1] ?? null,
+              )}
             />
           ))}
         </div>
@@ -157,11 +164,7 @@ export function StudentReportScreen() {
                 'Doctor',
                 'Diagnosis',
                 'Teaching',
-                'Step 1',
-                'Step 2',
-                'Step 3',
-                'Step 4',
-                'Step 5',
+                ...RATED_STEPS.map((step) => `Step ${step.id}`),
               ].map((h) => (
                 <th
                   key={h}
@@ -186,8 +189,8 @@ export function StudentReportScreen() {
                 <td style={{ padding: 6 }}>
                   {formatSeconds(s.teachingSeconds)}
                 </td>
-                {s.ratings.map((rating, i) => (
-                  <td key={STEPS[i]?.id} style={{ padding: 6 }}>
+                {ratedValues(s.ratings).map((rating, i) => (
+                  <td key={RATED_STEPS[i]?.id} style={{ padding: 6 }}>
                     {rating ?? '–'}
                   </td>
                 ))}

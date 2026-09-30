@@ -12,6 +12,24 @@ export const MAX_SECONDS = 21_600;
 export const STEP_IDS = [1, 2, 3, 4, 5] as const;
 export type StepId = (typeof STEP_IDS)[number];
 
+/**
+ * The steps the preceptor rates. Step 3, Teach General Rule, takes remarks only, since the pilot
+ * feedback of 30 September 2026. Ratings stored for it before then are kept, and left out of every
+ * average, chart and dashboard; the CSV export still has its column.
+ */
+export const RATED_STEP_IDS = [1, 2, 4, 5] as const satisfies readonly StepId[];
+
+export function isRatedStep(step: number): boolean {
+  return (RATED_STEP_IDS as readonly number[]).includes(step);
+}
+
+/** The rated steps in words, such as "steps 1, 2 and 4". */
+export function ratedStepsText(): string {
+  const ids = [...RATED_STEP_IDS];
+  const last = ids.pop();
+  return `steps ${ids.join(', ')} and ${last}`;
+}
+
 export const STEP2_MODES = ['quick', 'deep'] as const;
 export type Step2Mode = (typeof STEP2_MODES)[number];
 
@@ -102,6 +120,14 @@ export const STEPS = [
     starters: ['Next time, try to', 'You missed', 'Consider'],
   },
 ] as const;
+
+/** The details of the rated steps, in order. */
+export const RATED_STEPS = STEPS.filter((step) => isRatedStep(step.id));
+
+/** The values for the rated steps, from a list with one value per step. */
+export function ratedValues<T>(perStep: readonly T[]): T[] {
+  return RATED_STEP_IDS.map((id) => perStep[id - 1] as T);
+}
 
 /** Index 0 is one star. */
 export const RATING_LABELS = [

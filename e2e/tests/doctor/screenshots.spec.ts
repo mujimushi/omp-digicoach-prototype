@@ -1,3 +1,4 @@
+import { isRatedStep } from '@omp/shared';
 import { expect, test } from '../../support/fixtures.ts';
 import {
   nextStep,
@@ -35,7 +36,7 @@ test('screenshots of each doctor screen at 390 px, attached to the report', asyn
   await shoot('03-step-1');
   for (const step of [2, 3, 4, 5]) {
     await nextStep(page, step);
-    await rateStep(page, 3);
+    if (isRatedStep(step)) await rateStep(page, 3);
     await shoot(`0${step + 2}-step-${step}`);
   }
   await page.getByRole('button', { name: 'Finish' }).click();

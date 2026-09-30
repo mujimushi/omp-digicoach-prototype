@@ -1,6 +1,7 @@
 import {
   CASE_TYPE_LABELS,
   DEPARTMENT_LABELS,
+  isRatedStep,
   LEVEL_LABELS,
   ratingLabel,
   type SessionStep,
@@ -166,11 +167,13 @@ export function SessionDetailScreen() {
           <table style={{ borderCollapse: 'collapse', fontSize: 14 }}>
             <caption className="visually-hidden">Step {step.step}</caption>
             <tbody>
-              <Row label="Rating">
-                {step.rating === null
-                  ? 'Not rated'
-                  : `${step.rating} of 5, ${ratingLabel(step.rating)}`}
-              </Row>
+              {isRatedStep(step.step) && (
+                <Row label="Rating">
+                  {step.rating === null
+                    ? 'Not rated'
+                    : `${step.rating} of 5, ${ratingLabel(step.rating)}`}
+                </Row>
+              )}
               <Row label="Time">{formatSeconds(step.seconds)}</Row>
               {stepText(step).map(([label, text]) => (
                 <Row key={label} label={label}>

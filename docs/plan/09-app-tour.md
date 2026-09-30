@@ -60,7 +60,7 @@ A modal with four short cards, dots, Next, and Skip on every card.
 | 2 | `case-type` | Choose the case type. | Tap |
 | 3 | `start` | Start the one-minute timer. | Tap |
 | 4 | `timer` | One minute for all five steps. Tap to pause. | Got it |
-| 5 | `rating` | Rate the learner once per step. | Got it |
+| 5 | `rating` | Rate the learner on this step. | Got it |
 | 6 | `next` | Go through the five steps. | Tap |
 | 7 | `finish` | Finish when you’re done. | Tap |
 | 8 | `log-save` | Add a note if you like, then save. | Tap |

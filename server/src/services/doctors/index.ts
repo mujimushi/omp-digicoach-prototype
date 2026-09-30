@@ -7,7 +7,7 @@ import type {
   RatingSpread,
   TaughtStudentRow,
 } from '@omp/shared';
-import { ONE_ROLE } from '@omp/shared';
+import { isRatedStep, ONE_ROLE, RATED_STEP_IDS } from '@omp/shared';
 import { eq, sql } from 'drizzle-orm';
 import type { Db } from '../../db/client.ts';
 import { auditLog, users } from '../../db/schema.ts';
@@ -51,12 +51,13 @@ function activitySql(where: ReturnType<typeof sql>, now: Date) {
       max(s.started_at) as last_session_at,
       avg(s.teaching_seconds) as avg_teaching_seconds,
       avg(s.overtime_seconds) as avg_overtime_seconds,
-      avg(case when rated.count = 5 then 1.0 else 0.0 end) filter (where s.id is not null) as all_steps_rated_share,
+      avg(case when rated.count = ${RATED_STEP_IDS.length} then 1.0 else 0.0 end) filter (where s.id is not null) as all_steps_rated_share,
       count(distinct s.student_id) as students_taught
     from users u
     left join teaching_sessions s on s.doctor_id = u.id
     left join lateral (
-      select count(ss.rating) as count from session_steps ss where ss.session_id = s.id
+      select count(ss.rating) as count from session_steps ss
+      where ss.session_id = s.id and ss.step in (${sql.raw(RATED_STEP_IDS.join(', '))})
     ) rated on true
     where ${where}
     group by u.id
@@ -134,6 +135,8 @@ export async function getDoctorDetail(
     unrated: 0,
   })) as RatingSpread;
   for (const entry of spread.rows) {
+    // Steps no longer rated keep their stored ratings, but aren't counted.
+    if (!isRatedStep(toNumber(entry.step))) continue;
     const step = ratingSpread[toNumber(entry.step) - 1];
     if (!step) continue;
     if (entry.rating === null) step.unrated = toNumber(entry.count);

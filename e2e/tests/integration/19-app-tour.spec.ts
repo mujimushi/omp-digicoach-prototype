@@ -59,7 +59,7 @@ test('E2E-19 a new doctor takes the app tour and a practice session; nothing is 
     page.getByText('One minute for all five steps. Tap to pause.'),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Got it' }).click();
-  await expect(page.getByText('Rate the learner once per step.')).toBeVisible();
+  await expect(page.getByText('Rate the learner on this step.')).toBeVisible();
   await page.getByRole('button', { name: 'Got it' }).click();
   await expect(page.getByText('Go through the five steps.')).toBeVisible();
   for (let step = 1; step < 5; step += 1)

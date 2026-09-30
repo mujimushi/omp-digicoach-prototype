@@ -1,4 +1,9 @@
-import { CSV_COLUMNS, REPORT_TIME_ZONE } from '@omp/shared';
+import {
+  CSV_COLUMNS,
+  isRatedStep,
+  RATED_STEP_IDS,
+  REPORT_TIME_ZONE,
+} from '@omp/shared';
 import { KNOWN_STUDENTS, KNOWN_USERS } from '@omp/shared/fixtures';
 import type { Page } from '@playwright/test';
 import { expect, test } from '../../support/fixtures.ts';
@@ -117,7 +122,7 @@ async function recordSession(page: Page, i: number, diagnosis: string) {
       await page.clock.fastForward((4 + i) * 1000);
       await page.getByTestId('timer-ring').click();
     }
-    if ((i + step) % 4 !== 0)
+    if ((i + step) % 4 !== 0 && isRatedStep(step))
       await rateStep(page, (((i + step) % 5) + 1) as 1 | 2 | 3 | 4 | 5);
     if (step < 5) await nextStep(page, step + 1);
   }
@@ -234,9 +239,12 @@ test('Data check: phone sessions match database rows, dashboard averages match S
   expectSameAverage(overview.avgTeachingSecondsThisMonth, figures?.teaching);
   expectSameAverage(overview.avgOvertimeSecondsThisMonth, figures?.overtime);
   for (let step = 1; step <= 5; step += 1) {
+    // Steps no longer rated stay out of the averages, whatever is stored.
     expectSameAverage(
       overview.avgRatingPerStepThisMonth[step - 1],
-      perStep.find((p) => p.step === step)?.average ?? null,
+      isRatedStep(step)
+        ? (perStep.find((p) => p.step === step)?.average ?? null)
+        : null,
     );
   }
   expect(overview.sessionsThisWeek).toBe(Number(figures?.this_week));
@@ -256,11 +264,12 @@ test('Data check: phone sessions match database rows, dashboard averages match S
   for (const id of [KNOWN_USERS.doctor.id, KNOWN_USERS.secondDoctor.id]) {
     const [expected] = await queryRows<Record<string, unknown>>(
       `select count(*) as total, avg(teaching_seconds) as teaching, avg(overtime_seconds) as overtime,
-        avg(case when (select count(ss.rating) from session_steps ss where ss.session_id = s.id) = 5
+        avg(case when (select count(ss.rating) from session_steps ss
+            where ss.session_id = s.id and ss.step = any($2::int[])) = cardinality($2::int[])
           then 1 else 0 end) as all_rated,
         count(distinct student_id) as students
        from teaching_sessions s where s.doctor_id = $1`,
-      [id],
+      [id, [...RATED_STEP_IDS]],
     );
     const row = activity.find((r: { id: string }) => r.id === id);
     expect(row.sessionsTotal).toBe(Number(expected?.total));

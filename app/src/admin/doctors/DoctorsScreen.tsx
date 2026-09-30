@@ -96,7 +96,7 @@ const COLUMNS: Column<DoctorActivityRow>[] = [
   },
   {
     key: 'rated',
-    label: 'All 5 rated',
+    label: 'All rated',
     align: 'right',
     sortValue: (r) => r.allStepsRatedShare,
     render: (r) => formatShare(r.allStepsRatedShare),

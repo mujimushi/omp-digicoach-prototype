@@ -1,4 +1,9 @@
-import { DEPARTMENT_LABELS, DESIGNATION_LABELS } from '@omp/shared';
+import {
+  DEPARTMENT_LABELS,
+  DESIGNATION_LABELS,
+  ratedStepsText,
+  ratedValues,
+} from '@omp/shared';
 import { useQuery } from '@tanstack/react-query';
 import { Printer } from 'lucide-react';
 import { useParams } from 'react-router';
@@ -66,7 +71,7 @@ export function DoctorReportScreen() {
             value={formatSeconds(activity.avgOvertimeSeconds)}
           />
           <Figure
-            label="All five steps rated"
+            label="All rated steps done"
             value={formatShare(activity.allStepsRatedShare)}
           />
           <Figure
@@ -92,7 +97,7 @@ export function DoctorReportScreen() {
                 'Diagnosis',
                 'Teaching',
                 'Extra',
-                'Ratings, steps 1–5',
+                `Ratings, ${ratedStepsText()}`,
               ].map((h) => (
                 <th
                   key={h}
@@ -121,7 +126,9 @@ export function DoctorReportScreen() {
                   {formatSeconds(s.overtimeSeconds)}
                 </td>
                 <td style={{ padding: 6 }}>
-                  {s.ratings.map((r) => r ?? '–').join(' · ')}
+                  {ratedValues(s.ratings)
+                    .map((r) => r ?? '–')
+                    .join(' · ')}
                 </td>
               </tr>
             ))}
