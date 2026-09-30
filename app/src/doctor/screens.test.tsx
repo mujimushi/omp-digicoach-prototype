@@ -189,6 +189,28 @@ describe('session step rating', () => {
     ).toHaveLength(1);
   });
 
+  it('has no rating on step 5, Correct & Improve, but keeps its comments', async () => {
+    const repository = repositoryWith();
+    const now = Date.now();
+    await repository.saveDraft(
+      draftAt(now, (d) => ({
+        ...d,
+        timer: [2, 3, 4, 5].reduce(
+          (timer, step) => goToStep(timer, step as 2 | 3 | 4 | 5, now),
+          d.timer,
+        ),
+      })),
+    );
+    renderDoctorApp({ path: '/session', repository, user: doctor });
+    expect(
+      await screen.findByRole('heading', { name: 'Step 5 of 5' }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Action plan')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('group', { name: /Rate Step/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it('has no rating on step 3, Teach General Rule, but keeps its teaching points', async () => {
     const repository = repositoryWith();
     const now = Date.now();

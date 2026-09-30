@@ -13,11 +13,12 @@ export const STEP_IDS = [1, 2, 3, 4, 5] as const;
 export type StepId = (typeof STEP_IDS)[number];
 
 /**
- * The steps the preceptor rates. Step 3, Teach General Rule, takes remarks only, since the pilot
- * feedback of 30 September 2026. Ratings stored for it before then are kept, and left out of every
- * average, chart and dashboard; the CSV export still has its column.
+ * The steps the preceptor rates. Step 3, Teach General Rule, and step 5, Correct & Improve, take
+ * remarks only, since the pilot feedback of 30 September 2026. Ratings stored for them before then
+ * are kept, and left out of every average, chart and dashboard; the CSV export still has their
+ * columns.
  */
-export const RATED_STEP_IDS = [1, 2, 4, 5] as const satisfies readonly StepId[];
+export const RATED_STEP_IDS = [1, 2, 4] as const satisfies readonly StepId[];
 
 export function isRatedStep(step: number): boolean {
   return (RATED_STEP_IDS as readonly number[]).includes(step);

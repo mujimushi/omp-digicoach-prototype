@@ -48,10 +48,10 @@ describe('numbers worked out by hand', () => {
     const perStep = overview.avgRatingPerStepThisMonth;
     expect(perStep[0]).toBeCloseTo(3);
     expect(perStep[1]).toBeCloseTo(3);
-    // Step 3 is no longer rated: its stored ratings stay out of the average.
+    // Steps 3 and 5 are no longer rated: their stored ratings stay out of the average.
     expect(perStep[2]).toBeNull();
     expect(perStep[3]).toBeCloseTo(10 / 3);
-    expect(perStep[4]).toBeCloseTo(11 / 3);
+    expect(perStep[4]).toBeNull();
     expect(overview.sessionsPerWeek).toHaveLength(12);
     expect(overview.sessionsPerWeek[0]).toEqual({
       weekStart: '2026-06-29',
@@ -102,13 +102,13 @@ describe('numbers worked out by hand', () => {
     const two = rows.find((r: { name: string }) => r.name === 'Student Two');
     expect(one).toMatchObject({ sessions: 3, doctors: 2 });
     for (const [i, value] of one.avgRatingPerStep.entries()) {
-      if (i === 2) expect(value).toBeNull();
+      if (i === 2 || i === 4) expect(value).toBeNull();
       else expect(value).toBeCloseTo(8 / 3);
     }
     expect(two).toMatchObject({
       sessions: 1,
       doctors: 1,
-      avgRatingPerStep: [3, null, null, 4, 5],
+      avgRatingPerStep: [3, null, null, 4, null],
     });
   });
 
@@ -125,15 +125,12 @@ describe('numbers worked out by hand', () => {
       counts: [1, 1, 0, 0, 0],
       unrated: 0,
     });
-    expect(detail.ratingSpread[4]).toEqual({
-      counts: [0, 1, 0, 0, 1],
-      unrated: 0,
-    });
-    // Step 3's stored ratings aren't counted.
-    expect(detail.ratingSpread[2]).toEqual({
-      counts: [0, 0, 0, 0, 0],
-      unrated: 0,
-    });
+    // The stored ratings of steps 3 and 5 aren't counted.
+    for (const step of [2, 4])
+      expect(detail.ratingSpread[step]).toEqual({
+        counts: [0, 0, 0, 0, 0],
+        unrated: 0,
+      });
   });
 });
 
