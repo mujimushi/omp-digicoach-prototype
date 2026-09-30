@@ -11,8 +11,16 @@ const out = resolve(process.argv[2] ?? `${here}/dist`);
 mkdirSync(out, { recursive: true });
 
 const manuals = [
-  { page: 'admin.html', file: 'OMP DigiCoach - Admin Guide.pdf', title: 'Admin Guide' },
-  { page: 'doctor.html', file: 'OMP DigiCoach - Doctor Guide.pdf', title: 'Doctor Guide' },
+  {
+    page: 'admin.html',
+    file: 'OMP DigiCoach - Admin Guide.pdf',
+    title: 'Admin Guide',
+  },
+  {
+    page: 'doctor.html',
+    file: 'OMP DigiCoach - Doctor Guide.pdf',
+    title: 'Doctor Guide',
+  },
 ];
 
 const footer = (title) => `
@@ -24,7 +32,9 @@ const footer = (title) => `
 const browser = await chromium.launch();
 for (const manual of manuals) {
   const page = await browser.newPage();
-  await page.goto(pathToFileURL(resolve(here, manual.page)).href, { waitUntil: 'networkidle' });
+  await page.goto(pathToFileURL(resolve(here, manual.page)).href, {
+    waitUntil: 'networkidle',
+  });
   await page.emulateMedia({ media: 'print' });
   const path = resolve(out, manual.file);
   await page.pdf({

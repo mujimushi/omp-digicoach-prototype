@@ -21,7 +21,10 @@ function shooter(page, dir) {
     /** The visible screen. */
     async screen(name, wait = 700, clip) {
       await page.waitForTimeout(wait);
-      await page.screenshot({ path: `${dir}${name}.png`, ...(clip ? { clip } : {}) });
+      await page.screenshot({
+        path: `${dir}${name}.png`,
+        ...(clip ? { clip } : {}),
+      });
       console.log('shot', name);
     },
     /** One element, such as a dialog or a panel. */
@@ -39,11 +42,17 @@ function shooter(page, dir) {
       }
     },
     async atOrThrow(name, heading, wait) {
-      await heading.first().evaluate((el) => el.scrollIntoView({ block: 'start' }));
+      await heading
+        .first()
+        .evaluate((el) => el.scrollIntoView({ block: 'start' }));
       await page.evaluate(() => {
         // Leave a little room above the heading.
-        for (const el of [document.scrollingElement, ...document.querySelectorAll('main, [style*="overflow"]')])
-          if (el && el.scrollTop > 0) el.scrollTop = Math.max(0, el.scrollTop - 24);
+        for (const el of [
+          document.scrollingElement,
+          ...document.querySelectorAll('main, [style*="overflow"]'),
+        ])
+          if (el && el.scrollTop > 0)
+            el.scrollTop = Math.max(0, el.scrollTop - 24);
       });
       await page.waitForTimeout(wait);
       await page.screenshot({ path: `${dir}${name}.png` });
@@ -82,13 +91,21 @@ if (which === 'admin' || which === 'all') {
   await page.getByRole('button', { name: 'Log In' }).click();
   await page.getByRole('heading', { name: 'Overview' }).waitFor();
   await s.screen('a02-overview', 2500);
-  await s.at('a03-overview-ratings', page.getByRole('heading', { name: 'Average rating per step this month' }), 1500);
+  await s.at(
+    'a03-overview-ratings',
+    page.getByRole('heading', { name: 'Average rating per step this month' }),
+    1500,
+  );
 
   await page.getByRole('link', { name: 'Doctors' }).first().click();
   await page.getByRole('heading', { name: 'Doctors' }).waitFor();
   await s.screen('a04-doctors', 1200);
 
-  await page.getByRole('button', { name: 'Add doctor' }).or(page.getByRole('link', { name: 'Add doctor' })).first().click();
+  await page
+    .getByRole('button', { name: 'Add doctor' })
+    .or(page.getByRole('link', { name: 'Add doctor' }))
+    .first()
+    .click();
   await page.getByLabel('Name', { exact: true }).waitFor();
   await page.getByLabel('Name', { exact: true }).fill('Dr. Sara Malik');
   await page.getByLabel('Username').fill('dr.sara');
@@ -102,16 +119,29 @@ if (which === 'admin' || which === 'all') {
   await page.getByLabel('Designation').selectOption('registrar');
   await page.getByRole('button', { name: 'Add doctor' }).click();
   await page.getByTestId('temporary-password').waitFor();
-  newDoctorPassword = (await page.getByTestId('temporary-password').textContent())?.trim();
-  await s.screen('a07-password-once', 700, { x: 0, y: 0, width: 1000, height: 433 });
+  newDoctorPassword = (
+    await page.getByTestId('temporary-password').textContent()
+  )?.trim();
+  await s.screen('a07-password-once', 700, {
+    x: 0,
+    y: 0,
+    width: 1000,
+    height: 433,
+  });
   await page.getByRole('button', { name: 'Done' }).click();
   await page.getByRole('heading', { name: 'Doctors' }).waitFor();
 
   await page.getByRole('link', { name: 'Dr. Bilal Hussain' }).click();
   await page.getByRole('heading', { name: 'Dr. Bilal Hussain' }).waitFor();
   await s.screen('a08-doctor-detail', 1500);
-  await s.at('a09-doctor-students', page.getByRole('heading', { name: 'Students taught' }));
-  await s.at('a10-doctor-sessions', page.getByRole('heading', { name: 'Sessions', exact: true }));
+  await s.at(
+    'a09-doctor-students',
+    page.getByRole('heading', { name: 'Students taught' }),
+  );
+  await s.at(
+    'a10-doctor-sessions',
+    page.getByRole('heading', { name: 'Sessions', exact: true }),
+  );
   const doctorId = page.url().split('/').pop();
 
   await page.goto(`${BASE}/admin/doctors/${doctorId}/edit`);
@@ -130,11 +160,21 @@ if (which === 'admin' || which === 'all') {
   await page.goto(`${BASE}/admin/students`);
   await page.getByRole('heading', { name: 'Students' }).waitFor();
   await s.screen('a15-students', 1200);
-  await page.getByRole('table').getByRole('link', { name: 'Asad Butt' }).click();
+  await page
+    .getByRole('table')
+    .getByRole('link', { name: 'Asad Butt' })
+    .click();
   await page.getByRole('heading', { name: 'Asad Butt' }).waitFor();
   await s.screen('a16-student-detail', 1500);
-  await s.at('a17-student-chart', page.getByRole('heading', { name: 'Ratings per step over time' }), 2000);
-  await s.at('a18-student-history', page.getByRole('heading', { name: 'Change history' }));
+  await s.at(
+    'a17-student-chart',
+    page.getByRole('heading', { name: 'Ratings per step over time' }),
+    2000,
+  );
+  await s.at(
+    'a18-student-history',
+    page.getByRole('heading', { name: 'Change history' }),
+  );
   const studentId = page.url().split('/').pop();
 
   await page.goto(`${BASE}/admin/reports/students/${studentId}`);
@@ -146,7 +186,10 @@ if (which === 'admin' || which === 'all') {
   await page.getByRole('table').getByRole('link').first().click();
   await page.getByRole('button', { name: 'Delete session' }).waitFor();
   await s.screen('a21-session-detail', 1200);
-  await s.at('a22-session-steps', page.getByText('Step 1', { exact: false }).first());
+  await s.at(
+    'a22-session-steps',
+    page.getByText('Step 1', { exact: false }).first(),
+  );
   await page.getByRole('button', { name: 'Delete session' }).click();
   await s.element('a23-delete-confirm', dialog());
   await dialog().getByRole('button', { name: 'Cancel' }).click();
@@ -179,7 +222,9 @@ if (which === 'doctor' || which === 'all') {
     await page.getByRole('button', { name: 'Log In' }).click();
     await page.getByRole('heading', { name: 'Choose your password' }).waitFor();
     await page.getByLabel('Temporary password').fill(newDoctorPassword);
-    await page.getByLabel('New password', { exact: true }).fill('my ward round');
+    await page
+      .getByLabel('New password', { exact: true })
+      .fill('my ward round');
     await page.getByLabel('New password again').fill('my ward round');
     await s.screen('d02-new-password');
     await page.getByRole('button', { name: 'Save new password' }).click();
@@ -187,7 +232,11 @@ if (which === 'doctor' || which === 'all') {
     const cards = page.getByRole('dialog');
     await cards.waitFor();
     await s.screen('d03-tour-welcome');
-    for (const name of ['d04-tour-steps', 'd05-tour-offline', 'd06-tour-practice']) {
+    for (const name of [
+      'd04-tour-steps',
+      'd05-tour-offline',
+      'd06-tour-practice',
+    ]) {
       await cards.getByRole('button', { name: 'Next' }).click();
       await s.screen(name);
     }
@@ -199,11 +248,14 @@ if (which === 'doctor' || which === 'all') {
     await s.screen('d08-practice-setup');
     await page.getByRole('button', { name: 'Long Case' }).click();
     await page.getByRole('button', { name: /Start teaching session/ }).click();
-    await page.getByText('One minute for all five steps. Tap to pause.').waitFor();
+    await page
+      .getByText('One minute for all five steps. Tap to pause.')
+      .waitFor();
     await s.screen('d09-practice-timer');
     await page.getByRole('button', { name: 'Got it' }).click();
     await page.getByRole('button', { name: 'Got it' }).click();
-    for (let i = 0; i < 4; i += 1) await page.getByRole('button', { name: 'Next step' }).click();
+    for (let i = 0; i < 4; i += 1)
+      await page.getByRole('button', { name: 'Next step' }).click();
     await page.getByRole('button', { name: 'Finish' }).click();
     await page.getByRole('button', { name: 'Save', exact: true }).click();
     await page.getByRole('dialog', { name: 'You’re ready' }).waitFor();
@@ -223,7 +275,9 @@ if (which === 'doctor' || which === 'all') {
   await page.getByRole('button', { name: 'Add student' }).click();
   await page.getByRole('heading', { name: 'Add student' }).waitFor();
   await page.getByLabel('Name', { exact: true }).fill('Zainab Akhtar');
-  await page.getByRole('button', { name: 'Medical Student', exact: true }).click();
+  await page
+    .getByRole('button', { name: 'Medical Student', exact: true })
+    .click();
   await page.getByRole('button', { name: '3rd Year', exact: true }).click();
   await s.screen('d12-add-student');
   await page.goBack();
@@ -241,14 +295,19 @@ if (which === 'doctor' || which === 'all') {
   const started = Date.now();
   await page.getByRole('button', { name: /Start teaching session/ }).click();
   await page.getByRole('heading', { name: 'Step 1 of 5' }).waitFor();
-  await page.getByLabel('Learner’s answer').fill('Community acquired pneumonia');
+  await page
+    .getByLabel('Learner’s answer')
+    .fill('Community acquired pneumonia');
   await s.screen('d15-step1');
   const rate = (name) => page.getByRole('button', { name }).click();
   await rate('4 stars, Proficient');
   await s.at('d16-rating', page.getByText('Rate the learner on this step'));
   await page.getByRole('button', { name: /Time left|Extra time/ }).click();
   await s.screen('d17-paused');
-  await page.getByRole('button', { name: /Time left|Extra time|Paused/ }).first().click();
+  await page
+    .getByRole('button', { name: /Time left|Extra time|Paused/ })
+    .first()
+    .click();
 
   await page.getByRole('button', { name: 'Next step' }).click();
   await page.getByRole('heading', { name: 'Step 2 of 5' }).waitFor();
@@ -256,14 +315,22 @@ if (which === 'doctor' || which === 'all') {
   await s.screen('d18-step2');
   await page.getByRole('button', { name: 'Next step' }).click();
   await page.getByRole('heading', { name: 'Step 3 of 5' }).waitFor();
-  await page.getByLabel('One important thing to remember is').fill('CURB-65 guides admission');
+  await page
+    .getByLabel('One important thing to remember is')
+    .fill('CURB-65 guides admission');
   await page.getByLabel('In patients with').fill('hypoxia');
   await s.screen('d19-step3');
-  await s.at('d20-step3-pearl', page.getByRole('button', { name: 'Save as teaching pearl' }));
+  await s.at(
+    'd20-step3-pearl',
+    page.getByRole('button', { name: 'Save as teaching pearl' }),
+  );
   await rate('4 stars, Proficient');
   await page.getByRole('button', { name: 'Next step' }).click();
   await page.getByRole('heading', { name: 'Step 4 of 5' }).waitFor();
-  await page.getByRole('button', { name: 'Good history', exact: true }).click().catch(() => {});
+  await page
+    .getByRole('button', { name: 'Good history', exact: true })
+    .click()
+    .catch(() => {});
   await rate('5 stars, Excellent');
   await s.screen('d21-step4');
   await page.getByRole('button', { name: 'Next step' }).click();
@@ -294,14 +361,22 @@ if (which === 'doctor' || which === 'all') {
   await s.screen('d25-in-progress', 5000);
   await page.getByRole('button', { name: 'Discard', exact: true }).click();
   await s.element('d26-discard-confirm', page.getByRole('alertdialog'));
-  await page.getByRole('alertdialog').getByRole('button', { name: 'Discard' }).click();
+  await page
+    .getByRole('alertdialog')
+    .getByRole('button', { name: 'Discard' })
+    .click();
 
   // Tabs.
   await page.getByRole('link', { name: 'History' }).click();
   await s.screen('d27-history', 1200);
-  await page.getByRole('main').getByRole('link').first().click().catch(async () => {
-    await page.locator('a[href^="/history/"]').first().click();
-  });
+  await page
+    .getByRole('main')
+    .getByRole('link')
+    .first()
+    .click()
+    .catch(async () => {
+      await page.locator('a[href^="/history/"]').first().click();
+    });
   await s.screen('d28-history-detail', 1200);
   await page.getByRole('link', { name: 'Stats' }).click();
   await s.screen('d29-stats', 1500);
@@ -325,7 +400,8 @@ if (which === 'doctor' || which === 'all') {
   await page.getByRole('button', { name: 'Long Case', exact: true }).click();
   await page.getByRole('button', { name: /Start teaching session/ }).click();
   await page.getByRole('heading', { name: 'Step 1 of 5' }).waitFor();
-  for (let i = 0; i < 4; i += 1) await page.getByRole('button', { name: 'Next step' }).click();
+  for (let i = 0; i < 4; i += 1)
+    await page.getByRole('button', { name: 'Next step' }).click();
   await page.getByRole('button', { name: 'Finish' }).click();
   await page.getByRole('button', { name: 'Skip', exact: true }).click();
   await page.getByText('Choose the learner to teach').waitFor();
@@ -335,7 +411,10 @@ if (which === 'doctor' || which === 'all') {
   console.log('shot', 'd35-badge-waiting');
   await context.setOffline(false);
   await page.evaluate(() => window.dispatchEvent(new Event('online')));
-  await page.getByTestId('sync-badge').getByText('All sent').waitFor({ timeout: 30000 });
+  await page
+    .getByTestId('sync-badge')
+    .getByText('All sent')
+    .waitFor({ timeout: 30000 });
   await page.waitForTimeout(300);
   await page.screenshot({ path: `${dir}d36-badge-sent.png`, clip: header });
   console.log('shot', 'd36-badge-sent');
