@@ -1,4 +1,5 @@
 import { APP_NAME } from '@omp/shared';
+import { InstallNotice } from '../install/InstallNotice.tsx';
 import { ds } from '../styles/tokens.ts';
 import { Logo } from './Logo.tsx';
 
@@ -14,6 +15,7 @@ export function Splash() {
         alignItems: 'center',
         justifyContent: 'center',
         background: ds.cream,
+        padding: 24,
       }}
     >
       <Logo size={72} />
@@ -27,6 +29,9 @@ export function Splash() {
       >
         {APP_NAME}
       </h1>
+      <div style={{ width: '100%', maxWidth: 420, marginTop: 24 }}>
+        <InstallNotice />
+      </div>
     </main>
   );
 }

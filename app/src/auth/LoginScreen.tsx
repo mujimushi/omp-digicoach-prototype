@@ -3,6 +3,7 @@ import { Lock, User } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router';
 import { ApiRequestError, NetworkError } from '../api/errors.ts';
+import { InstallNotice } from '../install/InstallNotice.tsx';
 import { Logo } from '../layout/Logo.tsx';
 import { Splash } from '../layout/Splash.tsx';
 import { LoginBlockedError } from '../offline/phone-auth.ts';
@@ -104,6 +105,9 @@ export function LoginScreen() {
         <p style={{ color: ds.txW, fontSize: 14, margin: 0 }}>
           Your Pocket Teaching Coach
         </p>
+        <div style={{ width: '100%', marginTop: 20 }}>
+          <InstallNotice />
+        </div>
 
         <form
           onSubmit={onSubmit}
