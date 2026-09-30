@@ -1,4 +1,8 @@
-import { type SessionDraft, USEFULNESS_MAX } from '@omp/shared';
+import {
+  type SessionDraft,
+  USEFULNESS_MAX,
+  USEFULNESS_QUESTION,
+} from '@omp/shared';
 import { Check, X } from 'lucide-react';
 import { useId, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router';
@@ -202,7 +206,7 @@ export function QuickLogScreen() {
               marginBottom: 8,
             }}
           >
-            How useful was this teaching? (1 to {USEFULNESS_MAX})
+            {USEFULNESS_QUESTION} (1 to {USEFULNESS_MAX})
           </legend>
           <div style={{ display: 'flex', gap: 6 }}>
             {Array.from(

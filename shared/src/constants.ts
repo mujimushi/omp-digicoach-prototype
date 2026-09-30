@@ -145,6 +145,11 @@ export function ratingLabel(rating: Rating): string {
 }
 
 export const USEFULNESS_MAX = 6;
+/** The quick log's question: the preceptor asks the student. The stored field is `usefulness`. */
+export const USEFULNESS_QUESTION =
+  'Ask the student: How useful was this session for you?';
+/** The student's answer, where it is shown later. */
+export const USEFULNESS_LABEL = 'Useful for the student';
 
 export const LEVELS = ['medical_student', 'house_officer', 'resident'] as const;
 export type Level = (typeof LEVELS)[number];

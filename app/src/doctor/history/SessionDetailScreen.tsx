@@ -4,6 +4,7 @@ import {
   STEP3_TEMPLATES,
   STEPS,
   type TeachingSession,
+  USEFULNESS_LABEL,
 } from '@omp/shared';
 import type { ReactNode } from 'react';
 import { Navigate, useParams } from 'react-router';
@@ -169,7 +170,7 @@ export function SessionDetailScreen() {
                   ? 'Yes'
                   : 'No'}
             </Fact>
-            <Fact label="Usefulness">
+            <Fact label={USEFULNESS_LABEL}>
               {session.usefulness === null
                 ? 'Not recorded'
                 : `${session.usefulness} of 6`}

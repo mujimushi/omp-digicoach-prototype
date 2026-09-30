@@ -80,7 +80,7 @@ export function sessionColumns(
     },
     {
       key: 'useful',
-      label: 'Useful',
+      label: 'Useful for student',
       align: 'right',
       sortValue: (r) => r.usefulness,
       render: (r) => r.usefulness ?? '–',

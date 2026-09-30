@@ -340,6 +340,11 @@ describe('quick log', () => {
     expect(await screen.findByTestId('log-times')).toHaveTextContent(
       'Teaching time 1m 30s · Extra time 30s',
     );
+    expect(
+      screen.getByText(
+        'Ask the student: How useful was this session for you? (1 to 6)',
+      ),
+    ).toBeInTheDocument();
     await user.type(screen.getByLabelText('Diagnosis'), 'Pneumonia');
     await user.click(screen.getByRole('button', { name: 'Yes' }));
     await user.click(screen.getByRole('button', { name: 'Usefulness 5' }));

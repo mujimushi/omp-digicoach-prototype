@@ -7,6 +7,7 @@ import {
   type SessionStep,
   STEP3_TEMPLATES,
   STEPS,
+  USEFULNESS_LABEL,
   YEAR_LABELS,
 } from '@omp/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -149,7 +150,7 @@ export function SessionDetailScreen() {
                   ? 'Yes'
                   : 'No'}
             </Row>
-            <Row label="Usefulness">
+            <Row label={USEFULNESS_LABEL}>
               {session.usefulness === null
                 ? 'Not recorded'
                 : `${session.usefulness} of 6`}
