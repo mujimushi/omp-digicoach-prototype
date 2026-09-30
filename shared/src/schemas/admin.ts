@@ -194,6 +194,8 @@ export const StudentSummaryRow = z.strictObject({
   pmdcNumber: z.string().nullable(),
   level: LevelKey,
   year: YearKey.nullable(),
+  /** The doctor who added the student; each doctor keeps their own list. */
+  addedBy: z.string(),
   sessions: Count,
   doctors: Count,
   avgRatingPerStep: PerStep(Average),

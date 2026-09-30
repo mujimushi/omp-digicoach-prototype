@@ -36,6 +36,7 @@ const COLUMNS: Column<StudentSummaryRow>[] = [
     ),
   },
   { key: 'pmdc', label: 'PMDC number', render: (r) => r.pmdcNumber ?? '–' },
+  { key: 'addedBy', label: 'Added by', render: (r) => r.addedBy },
   { key: 'level', label: 'Level', render: (r) => LEVEL_LABELS[r.level] },
   {
     key: 'year',
@@ -98,7 +99,7 @@ export function StudentsScreen() {
     <>
       <PageHeader
         title="Students"
-        subtitle="Every student any doctor has added. Average rating per step, 1 to 5."
+        subtitle="Every student, with the doctor who added them. Each doctor keeps their own list, so a student taught by two doctors appears once per doctor. Average rating per step, 1 to 5."
       />
       <Panel>
         <div

@@ -84,9 +84,9 @@ export function StudentDetailScreen() {
     <>
       <PageHeader
         title={summary.name}
-        subtitle={
+        subtitle={`${
           summary.pmdcNumber ? `PMDC ${summary.pmdcNumber}` : 'No PMDC number'
-        }
+        } · Added by ${summary.addedBy}`}
         actions={
           <Button
             variant="secondary"

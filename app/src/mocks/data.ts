@@ -118,6 +118,7 @@ function summary(student: Student): StudentSummaryRow {
     pmdcNumber: student.pmdcNumber,
     level: student.level,
     year: student.year,
+    addedBy: doctor.name,
     sessions: own.length,
     doctors: new Set(own.map((e) => e.doctorId)).size,
     avgRatingPerStep: [3, 3.5, null, 4, 2],

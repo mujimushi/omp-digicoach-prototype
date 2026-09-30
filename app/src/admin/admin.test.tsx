@@ -199,6 +199,13 @@ describe('tables and charts', () => {
     expect(within(students).getAllByRole('row')).toHaveLength(
       mockData.students.length + 1,
     );
+    // Each doctor keeps their own list, so the table says who added each student.
+    expect(
+      within(students).getByRole('columnheader', { name: /Added by/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(students).getAllByRole('cell', { name: mockData.doctor.name }),
+    ).toHaveLength(mockData.students.length);
   });
 
   it('draws the overview chart at a fixed size', async () => {

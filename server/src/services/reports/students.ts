@@ -26,6 +26,7 @@ const SORTS: Record<NonNullable<StudentsQuery['sort']>, SQL> = {
 function summarySql(where: SQL, order: SQL) {
   return sql`
     select st.id, st.name, st.pmdc_number, st.level, st.year,
+      creator.name as added_by,
       count(distinct s.id) as sessions,
       count(distinct s.doctor_id) as doctors,
       max(s.started_at) as last_session_at,
@@ -35,10 +36,11 @@ function summarySql(where: SQL, order: SQL) {
       avg(ss.rating) filter (where ss.step = 4) as r4,
       avg(ss.rating) filter (where ss.step = 5) as r5
     from students st
+    join users creator on creator.id = st.created_by
     left join teaching_sessions s on s.student_id = st.id
     left join session_steps ss on ss.session_id = s.id
     where ${where}
-    group by st.id
+    group by st.id, creator.name
     order by ${order}`;
 }
 
@@ -49,6 +51,7 @@ function toSummaryRow(row: Record<string, unknown>): StudentSummaryRow {
     pmdcNumber: (row.pmdc_number as string | null) ?? null,
     level: row.level as StudentSummaryRow['level'],
     year: (row.year as StudentSummaryRow['year']) ?? null,
+    addedBy: String(row.added_by),
     sessions: toNumber(row.sessions),
     doctors: toNumber(row.doctors),
     // Steps no longer rated keep their stored ratings, but stay out of every average.

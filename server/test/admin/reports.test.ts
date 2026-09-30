@@ -100,12 +100,13 @@ describe('numbers worked out by hand', () => {
     const rows = (await get('/api/admin/students')).json();
     const one = rows.find((r: { name: string }) => r.name === 'Student One');
     const two = rows.find((r: { name: string }) => r.name === 'Student Two');
-    expect(one).toMatchObject({ sessions: 3, doctors: 2 });
+    expect(one).toMatchObject({ addedBy: 'Dr. A', sessions: 3, doctors: 2 });
     for (const [i, value] of one.avgRatingPerStep.entries()) {
       if (i === 2 || i === 4) expect(value).toBeNull();
       else expect(value).toBeCloseTo(8 / 3);
     }
     expect(two).toMatchObject({
+      addedBy: 'Dr. A',
       sessions: 1,
       doctors: 1,
       avgRatingPerStep: [3, null, null, 4, null],
