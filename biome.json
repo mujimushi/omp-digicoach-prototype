@@ -12,6 +12,7 @@
       "!!prototype",
       "!!**/dist",
       "!server/drizzle",
+      "!docs/manuals/manual.css",
       "!**/playwright-report",
       "!**/test-results",
       "!**/blob-report"
